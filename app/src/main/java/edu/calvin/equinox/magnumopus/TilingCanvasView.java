@@ -13,15 +13,16 @@ import android.view.View;
 
 public class TilingCanvasView extends View
 {
-    private static final int TILE_SIZE = 512;
-
+    /**
+     * Storage of currently loaded tiles.
+     */
     private LongSparseArray<Tile> m_tiles;
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
         m_tiles = new LongSparseArray<>(4);
-        m_tiles.put(hashCoord(0, 0), new Tile(TILE_SIZE));
+        m_tiles.put(hashCoord(0, 0), new Tile());
     }
 
     @Override
@@ -35,6 +36,17 @@ public class TilingCanvasView extends View
         );
     }
 
+    /**
+     * Transform an (x, y) coordinate into a single hash value.
+     *
+     * @param x
+     *  X parameter of the coordinate.
+     * @param y
+     *  Y parameter of the coordinate.
+     *
+     * @return
+     *  Hash identifier of the coordinate.
+     */
     private long hashCoord(int x, int y)
     {
         long hash = 2166136261L;
