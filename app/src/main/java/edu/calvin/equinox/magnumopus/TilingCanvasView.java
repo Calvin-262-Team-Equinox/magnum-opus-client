@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
 import android.util.LongSparseArray;
+import android.view.MotionEvent;
 import android.view.View;
 
 /**
@@ -34,6 +35,25 @@ public class TilingCanvasView extends View
                 m_tiles.get(hashCoord(0, 0)).getComposite(),
                 0, 0, null
         );
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        switch (event.getAction())
+        {
+            case MotionEvent.ACTION_DOWN:
+            case MotionEvent.ACTION_MOVE:
+                m_tiles.get(hashCoord(0, 0)).onTouchMove(event.getX(), event.getY());
+                invalidate();
+                break;
+
+            case MotionEvent.ACTION_UP:
+                m_tiles.get(hashCoord(0, 0)).onTouchRelease();
+                invalidate();
+                break;
+        }
+        return true;
     }
 
     /**
