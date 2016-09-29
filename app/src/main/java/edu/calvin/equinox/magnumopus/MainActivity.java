@@ -4,15 +4,16 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 
 /**
-* MainActivity()
-* This is the main "entry point" for the app
-*/
+ * MainActivity()
+ * This is the main "entry point" for the app
+ */
+
 public class MainActivity extends AppCompatActivity
 {
-/**
-* OnCreate()
-* This creates the main activity layout
-*/
+    /**
+     * OnCreate()
+     * This creates the main activity layout
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {

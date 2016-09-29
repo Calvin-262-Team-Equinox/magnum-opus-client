@@ -3,7 +3,6 @@ package edu.calvin.equinox.magnumopus;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,8 +15,10 @@ public class Tile
 {
     /**
      * Pixel dimension of each tile.
+     *
+     * TODO: Reduce to 512px once tiling is implemented.
      */
-    public static final int TILE_SIZE = 512;
+    public static final int TILE_SIZE = 2048;
 
     /**
      * Bitmap of active user drawings.
@@ -66,6 +67,11 @@ public class Tile
      */
     private AtomicInteger m_syncState;
 
+    /**
+     * Current brush this tile is painting with.
+     */
+    private Brush m_brush;
+
     public Tile()
     {
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
@@ -81,11 +87,7 @@ public class Tile
         m_isDirty = false;
         m_syncState = new AtomicInteger(NOT_SYNCING);
 
-        // Sample painting.
-        Paint brush = new Paint();
-        brush.setStyle(Paint.Style.FILL);
-        brush.setColor(Color.BLUE);
-        m_drawLayerCanvas.drawCircle(150, 150, 100, brush);
+        m_brush = new PencilBrush(m_drawLayerCanvas);
     }
 
     /**
@@ -103,6 +105,28 @@ public class Tile
         m_compositeCanvas.drawBitmap(m_drawLayer, 0, 0, null);
 
         return m_composite;
+    }
+
+    /**
+     * Event handler for draw movement.
+     *
+     * @param x
+     *  The x coordinate of the current position.
+     * @param y
+     *  The y coordinate of the current position.
+     */
+    public void onTouchMove(float x, float y)
+    {
+        m_brush.onTouchMove(x, y);
+        m_isDirty = true;
+    }
+
+    /**
+     * Event handler for draw end.
+     */
+    public void onTouchRelease()
+    {
+        m_brush.onTouchRelease();
     }
 
     /**
