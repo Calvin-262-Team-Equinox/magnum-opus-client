@@ -3,9 +3,11 @@ package edu.calvin.equinox.magnumopus;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.LongSparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.util.Comparator;
+import java.util.TreeMap;
 
 /**
  * Render canvas tiles to the view port. Dispatch paint commands to the
@@ -17,13 +19,25 @@ public class TilingCanvasView extends View
     /**
      * Storage of currently loaded tiles.
      */
-    private LongSparseArray<Tile> m_tiles;
+    private TreeMap<Coordinate<Integer>, Tile> m_tiles;
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
-        m_tiles = new LongSparseArray<>(4);
-        m_tiles.put(hashCoord(0, 0), new Tile());
+
+        m_tiles = new TreeMap<>(new Comparator<Coordinate<Integer>>()
+        {
+            @Override
+            public int compare(Coordinate<Integer> c1, Coordinate<Integer> c2)
+            {
+                return c1.x < c2.x ? -1
+                     : c1.x > c2.x ?  1
+                     : c1.y < c2.y ? -1
+                     : c1.y > c2.y ?  1
+                     : 0;
+            }
+        });
+        m_tiles.put(makeCoord(0, 0), new Tile());
     }
 
     @Override
@@ -32,7 +46,7 @@ public class TilingCanvasView extends View
         super.onDraw(canvas);
 
         canvas.drawBitmap(
-                m_tiles.get(hashCoord(0, 0)).getComposite(),
+                m_tiles.get(makeCoord(0, 0)).getComposite(),
                 0, 0, null
         );
     }
@@ -44,12 +58,12 @@ public class TilingCanvasView extends View
         {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_MOVE:
-                m_tiles.get(hashCoord(0, 0)).onTouchMove(event.getX(), event.getY());
+                m_tiles.get(makeCoord(0, 0)).onTouchMove(event.getX(), event.getY());
                 invalidate();
                 break;
 
             case MotionEvent.ACTION_UP:
-                m_tiles.get(hashCoord(0, 0)).onTouchRelease();
+                m_tiles.get(makeCoord(0, 0)).onTouchRelease();
                 invalidate();
                 break;
         }
@@ -57,7 +71,7 @@ public class TilingCanvasView extends View
     }
 
     /**
-     * Transform an (x, y) coordinate into a single hash value.
+     * Helper function to make an integer coordinate.
      *
      * @param x
      *  X parameter of the coordinate.
@@ -65,18 +79,10 @@ public class TilingCanvasView extends View
      *  Y parameter of the coordinate.
      *
      * @return
-     *  Hash identifier of the coordinate.
+     *  The coordinate.
      */
-    private long hashCoord(int x, int y)
+    private static Coordinate<Integer> makeCoord(int x, int y)
     {
-        long hash = 2166136261L;
-
-        hash = hash ^ x;
-        hash *= 16777619;
-
-        hash = hash ^ y;
-        hash *= 16777619;
-
-        return hash;
+        return new Coordinate<>(x, y);
     }
 }

@@ -34,7 +34,7 @@ public class PencilBrush extends Brush
     /**
      * History of all motion coordinates from the current draw cycle.
      */
-    private ArrayList<Coordinate> m_drawTrack;
+    private ArrayList<Coordinate<Float>> m_drawTrack;
 
     public PencilBrush(Canvas canvas)
     {
@@ -65,7 +65,7 @@ public class PencilBrush extends Brush
     {
         if (m_drawTrack.size() > 0)
         {
-            Coordinate prev = m_drawTrack.get(m_drawTrack.size() - 1);
+            Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
             float dx = x - prev.x;
             float dy = y - prev.y;
             if (Math.abs(dx) < 6 && Math.abs(dy) < 6)
@@ -76,20 +76,20 @@ public class PencilBrush extends Brush
         }
 
         // Record current position.
-        m_drawTrack.add(new Coordinate(x, y));
+        m_drawTrack.add(new Coordinate<>(x, y));
 
         int len = m_drawTrack.size();
         // Draw lines from the last n recorded positions to the current position.
         for (int i = Math.max(0, len - 6); i < len - 1; i += 2)
         {
-            Coordinate prev = m_drawTrack.get(i);
+            Coordinate<Float> prev = m_drawTrack.get(i);
             // Compute an anchor as the average of the last n points so that
             // the shading lines are pulled closer to the actual draw path.
             float anchX = prev.x;
             float anchY = prev.y;
             for (int j = i + 1; j < len; ++j)
             {
-                Coordinate cur = m_drawTrack.get(j);
+                Coordinate<Float> cur = m_drawTrack.get(j);
                 anchX += cur.x;
                 anchY += cur.y;
             }
@@ -112,7 +112,7 @@ public class PencilBrush extends Brush
         if (m_drawTrack.size() == 1)
         {
             // The canvas was just tapped, so draw a dot.
-            Coordinate first = m_drawTrack.get(0);
+            Coordinate<Float> first = m_drawTrack.get(0);
             m_paint.setStyle(Paint.Style.FILL);
             m_canvas.drawCircle(first.x, first.y, 5, m_paint);
             m_canvas.drawCircle(first.x - 2, first.y - 1, 5, m_paint);

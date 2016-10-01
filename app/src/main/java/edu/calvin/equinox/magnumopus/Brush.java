@@ -20,16 +20,4 @@ public abstract class Brush
      * Event handler for draw end.
      */
     public abstract void onTouchRelease();
-
-    protected class Coordinate
-    {
-        public final float x;
-        public final float y;
-
-        public Coordinate(float x, float y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }
 }
