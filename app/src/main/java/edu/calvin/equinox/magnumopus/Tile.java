@@ -7,6 +7,9 @@ import android.graphics.PorterDuff;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.calvin.equinox.magnumopus.brushes.Brush;
+import edu.calvin.equinox.magnumopus.brushes.PencilBrush;
+
 /**
  * A section of the canvas.
  */
@@ -101,6 +104,12 @@ public class Tile
         m_compositeCanvas.drawBitmap(m_syncedLayer, 0, 0, null);
         m_compositeCanvas.drawBitmap(m_syncingLayer, 0, 0, null);
         m_compositeCanvas.drawBitmap(m_drawLayer, 0, 0, null);
+
+        Bitmap preview = m_brush.getPreview();
+        if (preview != null)
+        {
+            m_compositeCanvas.drawBitmap(preview, 0, 0, null);
+        }
 
         return m_composite;
     }

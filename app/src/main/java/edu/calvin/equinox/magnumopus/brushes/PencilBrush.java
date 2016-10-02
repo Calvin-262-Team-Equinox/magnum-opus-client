@@ -1,4 +1,4 @@
-package edu.calvin.equinox.magnumopus;
+package edu.calvin.equinox.magnumopus.brushes;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -6,6 +6,8 @@ import android.graphics.Paint;
 import android.graphics.Path;
 
 import java.util.ArrayList;
+
+import edu.calvin.equinox.magnumopus.Coordinate;
 
 /**
  * Sketching pencil.
