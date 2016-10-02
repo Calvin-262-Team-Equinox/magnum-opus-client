@@ -37,7 +37,6 @@ public class TilingCanvasView extends View
                      : 0;
             }
         });
-        m_tiles.put(makeCoord(0, 0), new Tile());
     }
 
     @Override
@@ -45,25 +44,51 @@ public class TilingCanvasView extends View
     {
         super.onDraw(canvas);
 
-        canvas.drawBitmap(
-                m_tiles.get(makeCoord(0, 0)).getComposite(),
-                0, 0, null
-        );
+        int width = getWidth();
+        int height = getHeight();
+
+        // TODO: Convert this to a foreach m_tiles, and put tile loading/unloading elsewhere.
+        for (int x = 0; x < width; x += Tile.TILE_SIZE)
+        {
+            for (int y = 0; y < height; y += Tile.TILE_SIZE)
+            {
+                Coordinate<Integer> coord = makeCoord(x, y);
+                Tile tile = m_tiles.get(coord);
+                if (tile == null)
+                {
+                    tile = new Tile();
+                    m_tiles.put(coord, tile);
+                }
+
+                canvas.drawBitmap(
+                        tile.getComposite(),
+                        coord.x, coord.y, null
+                );
+            }
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        // TODO: Can we optimize this by sending events only to relevant tiles?
         switch (event.getAction())
         {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_MOVE:
-                m_tiles.get(makeCoord(0, 0)).onTouchMove(event.getX(), event.getY());
+                for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+                {
+                    Coordinate<Integer> coord = entry.getKey();
+                    entry.getValue().onTouchMove(event.getX() - coord.x, event.getY() - coord.y);
+                }
                 invalidate();
                 break;
 
             case MotionEvent.ACTION_UP:
-                m_tiles.get(makeCoord(0, 0)).onTouchRelease();
+                for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+                {
+                    entry.getValue().onTouchRelease();
+                }
                 invalidate();
                 break;
         }
@@ -71,7 +96,7 @@ public class TilingCanvasView extends View
     }
 
     /**
-     * Helper function to make an integer coordinate.
+     * Helper function to make an integer coordinate aligned to Tile.TILE_SIZE.
      *
      * @param x
      *  X parameter of the coordinate.
@@ -83,6 +108,20 @@ public class TilingCanvasView extends View
      */
     private static Coordinate<Integer> makeCoord(int x, int y)
     {
-        return new Coordinate<>(x, y);
+        return new Coordinate<>(align(x), align(y));
+    }
+
+    /**
+     * Align a position to the nearest multiple of Tile.TILE_SIZE <= pos.
+     *
+     * @param pos
+     *  Position to align.
+     *
+     * @return
+     *  The aligned position.
+     */
+    private static int align(int pos)
+    {
+        return (pos < 0 ? pos + 1 - Tile.TILE_SIZE : pos) / Tile.TILE_SIZE * Tile.TILE_SIZE;
     }
 }
