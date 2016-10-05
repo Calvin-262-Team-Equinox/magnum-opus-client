@@ -1,7 +1,6 @@
 package edu.calvin.equinox.magnumopus.brushes;
 
 import android.graphics.Bitmap;
-import android.graphics.BlurMaskFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
@@ -15,10 +14,10 @@ import edu.calvin.equinox.magnumopus.Coordinate;
 import edu.calvin.equinox.magnumopus.Tile;
 
 /**
- * Soft bristled paint brush.
+ * Sharp calligraphy pen.
  */
 
-public class PaintBrush extends Brush
+public class PenBrush extends Brush
 {
     /**
      * Bitmap of active user drawings.
@@ -49,12 +48,7 @@ public class PaintBrush extends Brush
      */
     private ArrayList<Coordinate<Float>> m_drawTrack;
 
-    /**
-     * Relative coordinates of each bristle on this brush.
-     */
-    private ArrayList<Coordinate<Float>> m_bristles;
-
-    public PaintBrush(Canvas canvas)
+    public PenBrush(Canvas canvas)
     {
         m_previewLayer = Bitmap.createBitmap(
                 Tile.TILE_SIZE, Tile.TILE_SIZE,
@@ -66,30 +60,15 @@ public class PaintBrush extends Brush
 
         m_paint = new Paint();
         m_paint.setStyle(Paint.Style.STROKE);
-        m_paint.setStrokeWidth(10);
-        m_paint.setStrokeCap(Paint.Cap.ROUND);
-        m_paint.setPathEffect(new CornerPathEffect(20));
-        m_paint.setMaskFilter(new BlurMaskFilter(3, BlurMaskFilter.Blur.NORMAL));
+        m_paint.setStrokeWidth(4);
+        m_paint.setPathEffect(new CornerPathEffect(1));
         m_paint.setAntiAlias(true);
         m_paint.setDither(true);
-        m_paint.setColor(Color.argb(100, 0, 0, 200));
 
         m_stroke = new Path();
+        m_stroke.setFillType(Path.FillType.WINDING);
 
         m_drawTrack = new ArrayList<>(48);
-
-        // Define bristle locations.
-        m_bristles = new ArrayList<>();
-        m_bristles.add(new Coordinate<>(  0f,   0f));
-        m_bristles.add(new Coordinate<>( 21f,   2f));
-        m_bristles.add(new Coordinate<>( -1f,  19f));
-        m_bristles.add(new Coordinate<>(-20f,  -2f));
-        m_bristles.add(new Coordinate<>(  1f, -22f));
-        m_bristles.add(new Coordinate<>( 14f,  11f));
-        m_bristles.add(new Coordinate<>( -9f,  17f));
-        m_bristles.add(new Coordinate<>(-13f, -10f));
-        m_bristles.add(new Coordinate<>( 18f,  -7f));
-        m_bristles.add(new Coordinate<>(  5f, -11f));
     }
 
     @Override
@@ -102,17 +81,6 @@ public class PaintBrush extends Brush
             {
                 return;
             }
-
-            if (m_drawTrack.size() == 1)
-            {
-                // This shift helps reduce the restart 'blip'.
-                double ang = Math.atan2(y - prev.y, x - prev.x);
-                float r = 6;
-                float newX = prev.x + r * (float)Math.cos(ang);
-                float newY = prev.y + r * (float)Math.sin(ang);
-                Coordinate<Float> shifted = new Coordinate<>(newX, newY);
-                m_drawTrack.set(0, shifted);
-            }
         }
         m_drawTrack.add(new Coordinate<>(x, y));
 
@@ -121,8 +89,7 @@ public class PaintBrush extends Brush
             return;
         }
 
-        // For performance, periodically apply the stroke. It does leave a
-        // 'blip' on each restart, so do this as infrequently as possible.
+        // For performance, periodically apply the stroke.
         Bitmap preview = getPreview();
         m_canvas.drawBitmap(preview, 0, 0, null);
         m_drawTrack.clear();
@@ -150,16 +117,60 @@ public class PaintBrush extends Brush
 
         m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
-        Coordinate<Float> first = m_drawTrack.get(0);
-        for (Coordinate<Float> bristle : m_bristles)
+        if (m_drawTrack.size() == 1)
         {
-            m_stroke.reset();
+            // Only tapped? Draw a dot.
+            Coordinate<Float> first = m_drawTrack.get(0);
+            m_paint.setStyle(Paint.Style.FILL);
+            m_previewLayerCanvas.drawCircle(first.x, first.y, 5, m_paint);
+            m_previewLayerCanvas.drawCircle(first.x - 2, first.y - 1, 5, m_paint);
+            m_paint.setStyle(Paint.Style.STROKE);
+            return m_previewLayer;
+        }
 
-            m_stroke.moveTo(first.x + bristle.x, first.y + bristle.y);
-            for (Coordinate<Float> coord : m_drawTrack)
+        m_stroke.reset();
+
+        double ang = 2.1;
+        int r = 4;
+
+        // Drawing the pen stroke as an area, then filling it in has the
+        // problem that if the stroke crosses itself, the overlapped part
+        // is cancelled out. So instead, draw several strokes next to each
+        // other to create a solid area.
+        for (int i = r; i <= 2 * r; i += r)
+        {
+            float dx = (i - r / 2f) * (float)Math.cos(ang);
+            float dy = (i - r / 2f) * (float)Math.sin(ang);
+
+            Coordinate<Float> coord = m_drawTrack.get(0);
+            Coordinate<Float> prev;
+
+            // One side of the pen stroke.
+            m_stroke.moveTo(coord.x + dx, coord.y + dy);
+            for (int j = 1; j < m_drawTrack.size(); ++j)
             {
-                m_stroke.lineTo(coord.x + bristle.x, coord.y + bristle.y);
+                prev = coord;
+                coord = m_drawTrack.get(j);
+                float anchX = (prev.x + coord.x) / 2;
+                float anchY = (prev.y + coord.y) / 2;
+                m_stroke.quadTo(prev.x + dx, prev.y + dy, anchX + dx, anchY + dy);
             }
+            m_stroke.lineTo(coord.x + dx, coord.y + dy);
+
+            // The other side of the pen stroke.
+            m_stroke.lineTo(coord.x - dx, coord.y - dy);
+            for (int j = m_drawTrack.size() - 2; j >= 0; --j)
+            {
+                prev = coord;
+                coord = m_drawTrack.get(j);
+                float anchX = (prev.x + coord.x) / 2;
+                float anchY = (prev.y + coord.y) / 2;
+                m_stroke.quadTo(prev.x - dx, prev.y - dy, anchX - dx, anchY - dy);
+            }
+            m_stroke.lineTo(coord.x - dx, coord.y - dy);
+
+            m_stroke.close();
+
             m_previewLayerCanvas.drawPath(m_stroke, m_paint);
         }
 
