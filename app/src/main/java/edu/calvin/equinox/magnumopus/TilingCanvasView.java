@@ -3,9 +3,11 @@ package edu.calvin.equinox.magnumopus;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.LongSparseArray;
 import android.view.MotionEvent;
 import android.view.View;
+
+import java.util.Comparator;
+import java.util.TreeMap;
 
 /**
  * Render canvas tiles to the view port. Dispatch paint commands to the
@@ -17,13 +19,24 @@ public class TilingCanvasView extends View
     /**
      * Storage of currently loaded tiles.
      */
-    private LongSparseArray<Tile> m_tiles;
+    private TreeMap<Coordinate<Integer>, Tile> m_tiles;
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
-        m_tiles = new LongSparseArray<>(4);
-        m_tiles.put(hashCoord(0, 0), new Tile());
+
+        m_tiles = new TreeMap<>(new Comparator<Coordinate<Integer>>()
+        {
+            @Override
+            public int compare(Coordinate<Integer> c1, Coordinate<Integer> c2)
+            {
+                return c1.x < c2.x ? -1
+                     : c1.x > c2.x ?  1
+                     : c1.y < c2.y ? -1
+                     : c1.y > c2.y ?  1
+                     : 0;
+            }
+        });
     }
 
     @Override
@@ -31,25 +44,51 @@ public class TilingCanvasView extends View
     {
         super.onDraw(canvas);
 
-        canvas.drawBitmap(
-                m_tiles.get(hashCoord(0, 0)).getComposite(),
-                0, 0, null
-        );
+        int width = getWidth();
+        int height = getHeight();
+
+        // TODO: Convert this to a foreach m_tiles, and put tile loading/unloading elsewhere.
+        for (int x = 0; x < width; x += Tile.TILE_SIZE)
+        {
+            for (int y = 0; y < height; y += Tile.TILE_SIZE)
+            {
+                Coordinate<Integer> coord = makeCoord(x, y);
+                Tile tile = m_tiles.get(coord);
+                if (tile == null)
+                {
+                    tile = new Tile();
+                    m_tiles.put(coord, tile);
+                }
+
+                canvas.drawBitmap(
+                        tile.getComposite(),
+                        coord.x, coord.y, null
+                );
+            }
+        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        // TODO: Can we optimize this by sending events only to relevant tiles?
         switch (event.getAction())
         {
             case MotionEvent.ACTION_DOWN:
             case MotionEvent.ACTION_MOVE:
-                m_tiles.get(hashCoord(0, 0)).onTouchMove(event.getX(), event.getY());
+                for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+                {
+                    Coordinate<Integer> coord = entry.getKey();
+                    entry.getValue().onTouchMove(event.getX() - coord.x, event.getY() - coord.y);
+                }
                 invalidate();
                 break;
 
             case MotionEvent.ACTION_UP:
-                m_tiles.get(hashCoord(0, 0)).onTouchRelease();
+                for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+                {
+                    entry.getValue().onTouchRelease();
+                }
                 invalidate();
                 break;
         }
@@ -57,7 +96,7 @@ public class TilingCanvasView extends View
     }
 
     /**
-     * Transform an (x, y) coordinate into a single hash value.
+     * Helper function to make an integer coordinate aligned to Tile.TILE_SIZE.
      *
      * @param x
      *  X parameter of the coordinate.
@@ -65,18 +104,24 @@ public class TilingCanvasView extends View
      *  Y parameter of the coordinate.
      *
      * @return
-     *  Hash identifier of the coordinate.
+     *  The coordinate.
      */
-    private long hashCoord(int x, int y)
+    private static Coordinate<Integer> makeCoord(int x, int y)
     {
-        long hash = 2166136261L;
+        return new Coordinate<>(align(x), align(y));
+    }
 
-        hash = hash ^ x;
-        hash *= 16777619;
-
-        hash = hash ^ y;
-        hash *= 16777619;
-
-        return hash;
+    /**
+     * Align a position to the nearest multiple of Tile.TILE_SIZE <= pos.
+     *
+     * @param pos
+     *  Position to align.
+     *
+     * @return
+     *  The aligned position.
+     */
+    private static int align(int pos)
+    {
+        return (pos < 0 ? pos + 1 - Tile.TILE_SIZE : pos) / Tile.TILE_SIZE * Tile.TILE_SIZE;
     }
 }

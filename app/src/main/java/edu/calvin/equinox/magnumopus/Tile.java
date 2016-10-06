@@ -15,10 +15,8 @@ public class Tile
 {
     /**
      * Pixel dimension of each tile.
-     *
-     * TODO: Reduce to 512px once tiling is implemented.
      */
-    public static final int TILE_SIZE = 2048;
+    public static final int TILE_SIZE = 512;
 
     /**
      * Bitmap of active user drawings.
@@ -118,6 +116,7 @@ public class Tile
     public void onTouchMove(float x, float y)
     {
         m_brush.onTouchMove(x, y);
+        // TODO: Only set dirty bit if this tile actually changed.
         m_isDirty = true;
     }
 
