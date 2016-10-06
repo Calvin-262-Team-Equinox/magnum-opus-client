@@ -1,4 +1,6 @@
-package edu.calvin.equinox.magnumopus;
+package edu.calvin.equinox.magnumopus.brushes;
+
+import android.graphics.Bitmap;
 
 /**
  * Basic brush interface.
@@ -20,4 +22,15 @@ public abstract class Brush
      * Event handler for draw end.
      */
     public abstract void onTouchRelease();
+
+    /**
+     * Get a preview of what this brush is drawing, but has not committed yet.
+     *
+     * @return
+     *  The preview, or null if not available.
+     */
+    public Bitmap getPreview()
+    {
+        return null;
+    }
 }
