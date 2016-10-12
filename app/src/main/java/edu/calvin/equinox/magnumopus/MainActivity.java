@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 /**
  * MainActivity()
@@ -43,5 +44,16 @@ public class MainActivity extends AppCompatActivity
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    /**
+     * Open the canvas.
+     *
+     * @param view
+     *  The View that called this.
+     */
+    public void openCanvas(View view)
+    {
+        startActivity(new Intent(this, CanvasActivity.class));
     }
 }
