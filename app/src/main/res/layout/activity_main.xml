@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -9,16 +10,24 @@
                 android:paddingTop="@dimen/activity_vertical_margin"
                 tools:context="edu.calvin.equinox.magnumopus.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Welcome to collaborative painting!"/>
-
     <view
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         class="edu.calvin.equinox.magnumopus.TilingCanvasView"
+        android:id="@+id/view"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="12dp"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/view"/>
+        android:layout_alignParentStart="true"/>
+
+    <Spinner
+        android:layout_height="wrap_content"
+        android:id="@+id/brushSpinner"
+        android:entries="@array/brushTypes"
+        android:layout_width="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"/>
+
+
 </RelativeLayout>
