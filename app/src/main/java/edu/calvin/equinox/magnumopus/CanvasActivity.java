@@ -2,18 +2,54 @@ package edu.calvin.equinox.magnumopus;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Spinner;
 
 /**
  * Activity for drawing on the canvas.
  */
 
-public class CanvasActivity extends AppCompatActivity
+public class CanvasActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener
 {
+    private Spinner m_brushSpinner;
+    private String m_brushType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canvas);
+
+        m_brushSpinner = (Spinner) findViewById(R.id.brush_spinner);
+        m_brushType = (String) m_brushSpinner.getSelectedItem();
+        m_brushSpinner.setOnItemSelectedListener(this);
+    }
+
+    /**
+     * Set the canvas's brush to the specified brush type when an item is selected
+     *
+     * @param adapterView
+     * @param view
+     * @param i
+     * @param l
+     */
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l)
+    {
+        m_brushType = (String) m_brushSpinner.getSelectedItem();
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+        theCanvas.setBrush(m_brushType);
+
+    }
+
+    /**
+     * If nothing is selected, do nothing
+     * @param adapterView
+     */
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView)
+    {
+
     }
 }

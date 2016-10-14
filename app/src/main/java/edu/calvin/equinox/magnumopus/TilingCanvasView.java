@@ -20,6 +20,7 @@ public class TilingCanvasView extends View
      * Storage of currently loaded tiles.
      */
     private TreeMap<Coordinate<Integer>, Tile> m_tiles;
+    public String m_brushType = "Paint Brush";
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
@@ -56,7 +57,7 @@ public class TilingCanvasView extends View
                 Tile tile = m_tiles.get(coord);
                 if (tile == null)
                 {
-                    tile = new Tile();
+                    tile = new Tile(m_brushType);
                     m_tiles.put(coord, tile);
                 }
 
@@ -123,5 +124,17 @@ public class TilingCanvasView extends View
     private static int align(int pos)
     {
         return (pos < 0 ? pos + 1 - Tile.TILE_SIZE : pos) / Tile.TILE_SIZE * Tile.TILE_SIZE;
+    }
+
+    /**
+     * Set the brush for each canvas tile
+     * @param brushType
+     */
+    protected void setBrush(String brushType)
+    {
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+        {
+            entry.getValue().setBrush(brushType);
+        }
     }
 }
