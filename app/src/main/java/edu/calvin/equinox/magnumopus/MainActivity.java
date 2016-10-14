@@ -1,11 +1,13 @@
 package edu.calvin.equinox.magnumopus;
 
+import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 /**
  * MainActivity()
@@ -23,6 +25,13 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent intent = getIntent();
+        if (Intent.ACTION_SEARCH.equals(intent.getAction()))
+        {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            Toast.makeText(this, "Unimplemented: open canvas <" + query + ">", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override
@@ -55,5 +64,16 @@ public class MainActivity extends AppCompatActivity
     public void openCanvas(View view)
     {
         startActivity(new Intent(this, CanvasActivity.class));
+    }
+
+    /**
+     * Open the search box for finding a canvas.
+     *
+     * @param view
+     *  The View that called this.
+     */
+    public void findCanvas(View view)
+    {
+        onSearchRequested();
     }
 }
