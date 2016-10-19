@@ -108,10 +108,8 @@ public class PaintBrush extends Brush
                 // This shift helps reduce the restart 'blip'.
                 double ang = Math.atan2(y - prev.y, x - prev.x);
                 float r = 6;
-                float newX = prev.x + r * (float)Math.cos(ang);
-                float newY = prev.y + r * (float)Math.sin(ang);
-                Coordinate<Float> shifted = new Coordinate<>(newX, newY);
-                m_drawTrack.set(0, shifted);
+                prev.x += r * (float)Math.cos(ang);
+                prev.y += r * (float)Math.sin(ang);
             }
         }
         m_drawTrack.add(new Coordinate<>(x, y));

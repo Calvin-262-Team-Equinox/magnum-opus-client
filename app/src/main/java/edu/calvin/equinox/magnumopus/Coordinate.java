@@ -6,8 +6,8 @@ package edu.calvin.equinox.magnumopus;
 
 public class Coordinate<E>
 {
-    public final E x;
-    public final E y;
+    public E x;
+    public E y;
 
     public Coordinate(E x, E y)
     {
