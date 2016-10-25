@@ -21,7 +21,7 @@ public class Tile
     /**
      * Pixel dimension of each tile.
      */
-    public static final int TILE_SIZE = 512;
+    public static final int TILE_SIZE = 256;
 
     /**
      * Bitmap of active user drawings.
@@ -33,14 +33,13 @@ public class Tile
     private Canvas m_drawLayerCanvas;
 
     /**
-     * Bitmap of edits that are in progress of synchronizing with the server.
-     */
-    private Bitmap m_syncingLayer;
-
-    /**
      * Verified synchronized tile bitmap from the server.
      */
     private Bitmap m_syncedLayer;
+    /**
+     * Canvas for updating synchronized layer.
+     */
+    private Canvas m_syncedLayerCanvas;
     /**
      * Version code of m_syncedLayer.
      */
@@ -80,9 +79,8 @@ public class Tile
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_drawLayerCanvas = new Canvas(m_drawLayer);
 
-        m_syncingLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
-
         m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        m_syncedLayerCanvas = new Canvas(m_syncedLayer);
 
         m_composite = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_compositeCanvas = new Canvas(m_composite);
@@ -126,7 +124,6 @@ public class Tile
         m_compositeCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         m_compositeCanvas.drawBitmap(m_syncedLayer, 0, 0, null);
-        m_compositeCanvas.drawBitmap(m_syncingLayer, 0, 0, null);
         m_compositeCanvas.drawBitmap(m_drawLayer, 0, 0, null);
 
         Bitmap preview = m_brush.getPreview();
@@ -170,12 +167,12 @@ public class Tile
         {
             if (m_isDirty)
             {
-                m_syncingLayer = Bitmap.createBitmap(m_drawLayer);
+                // Dispatch m_drawLayer to server.
+
+                m_syncedLayerCanvas.drawBitmap(m_drawLayer, 0, 0, null);
                 m_drawLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
                 m_isDirty = false;
-
-                // Dispatch m_syncingLayer to server.
             }
             else
             {
@@ -196,9 +193,9 @@ public class Tile
     {
         if (m_syncState.compareAndSet(SYNCING, COMPLETING_SYNC))
         {
-            m_syncedLayer = syncedImg;
+            m_syncedLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+            m_syncedLayerCanvas.drawBitmap(syncedImg, 0, 0, null);
             m_syncVersion = version;
-            m_syncingLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
 
             m_syncState.set(NOT_SYNCING);
         }

@@ -8,6 +8,7 @@ import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.RectF;
 
 import java.util.ArrayList;
 
@@ -56,19 +57,13 @@ public class PaintBrush extends Brush
 
     public PaintBrush(Canvas canvas)
     {
-        m_previewLayer = Bitmap.createBitmap(
-                Tile.TILE_SIZE, Tile.TILE_SIZE,
-                Bitmap.Config.ARGB_8888
-        );
-        m_previewLayerCanvas = new Canvas(m_previewLayer);
-
         m_canvas = canvas;
 
         m_paint = new Paint();
         m_paint.setStyle(Paint.Style.STROKE);
         m_paint.setStrokeWidth(10);
         m_paint.setStrokeCap(Paint.Cap.ROUND);
-        m_paint.setPathEffect(new CornerPathEffect(20));
+        m_paint.setPathEffect(new CornerPathEffect(8));
         m_paint.setMaskFilter(new BlurMaskFilter(3, BlurMaskFilter.Blur.NORMAL));
         m_paint.setAntiAlias(true);
         m_paint.setDither(true);
@@ -107,7 +102,7 @@ public class PaintBrush extends Brush
             {
                 // This shift helps reduce the restart 'blip'.
                 double ang = Math.atan2(y - prev.y, x - prev.x);
-                float r = 6;
+                float r = 2;
                 prev.x += r * (float)Math.cos(ang);
                 prev.y += r * (float)Math.sin(ang);
             }
@@ -122,7 +117,10 @@ public class PaintBrush extends Brush
         // For performance, periodically apply the stroke. It does leave a
         // 'blip' on each restart, so do this as infrequently as possible.
         Bitmap preview = getPreview();
-        m_canvas.drawBitmap(preview, 0, 0, null);
+        if (preview != null)
+        {
+            m_canvas.drawBitmap(preview, 0, 0, null);
+        }
         m_drawTrack.clear();
         m_drawTrack.add(new Coordinate<>(x, y));
     }
@@ -146,18 +144,52 @@ public class PaintBrush extends Brush
             return null;
         }
 
-        m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
-
-        Coordinate<Float> first = m_drawTrack.get(0);
+        RectF bounds = null;
         for (Coordinate<Float> bristle : m_bristles)
         {
             m_stroke.reset();
 
-            m_stroke.moveTo(first.x + bristle.x, first.y + bristle.y);
-            for (Coordinate<Float> coord : m_drawTrack)
+            Coordinate<Float> coord = m_drawTrack.get(0);
+            Coordinate<Float> prev;
+
+            m_stroke.moveTo(coord.x + bristle.x, coord.y + bristle.y);
+            for (int j = 1; j < m_drawTrack.size(); ++j)
             {
-                m_stroke.lineTo(coord.x + bristle.x, coord.y + bristle.y);
+                prev = coord;
+                coord = m_drawTrack.get(j);
+                float anchX = (prev.x + coord.x) / 2;
+                float anchY = (prev.y + coord.y) / 2;
+                m_stroke.quadTo(prev.x + bristle.x, prev.y + bristle.y, anchX + bristle.x, anchY + bristle.y);
             }
+            m_stroke.lineTo(coord.x + bristle.x, coord.y + bristle.y);
+
+            if (bounds == null)
+            {
+                bounds = new RectF();
+                m_stroke.computeBounds(bounds, true);
+                int buffer = 23;
+                if (!bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer))
+                {
+                    // BlurMaskFilter makes this draw operation very expensive, so
+                    // avoid it if possible.
+                    return null;
+                }
+
+                if (m_previewLayer == null)
+                {
+                    // Only allocate when absolutely needed.
+                    m_previewLayer = Bitmap.createBitmap(
+                            Tile.TILE_SIZE, Tile.TILE_SIZE,
+                            Bitmap.Config.ARGB_8888
+                    );
+                    m_previewLayerCanvas = new Canvas(m_previewLayer);
+                }
+                else
+                {
+                    m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                }
+            }
+
             m_previewLayerCanvas.drawPath(m_stroke, m_paint);
         }
 
