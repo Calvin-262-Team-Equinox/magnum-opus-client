@@ -2,7 +2,7 @@
     <string name="app_name">Magnum Opus</string>
     <string name="menu_about">About</string>
     <string name="about_content">Collaborative painting from brush strokes to masterpiece.\n\nBrought to you by:\nJahn Davis, Casey Jones, Hannah Ludema, and Micah Ng</string>
-    <string name="find_canvas">Enter canvas ID</string>
+    <string name="find_canvas">Find a canvas…</string>
     <string-array name="brushTypes">
         <item>Paint Brush</item>
         <item>Pen Brush</item>
