@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 
 /**
@@ -51,5 +52,30 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
     public void onNothingSelected(AdapterView<?> adapterView)
     {
 
+    }
+
+    /**
+     * Switch between navigation and painting modes.
+     *
+     * @param view
+     *  The View that called this.
+     */
+    public void toggleNavigation(View view)
+    {
+        ImageButton btn = (ImageButton)view;
+        if (btn == null)
+        {
+            return;
+        }
+
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+        if (theCanvas.toggleNavigating())
+        {
+            btn.setColorFilter(getResources().getColor(R.color.bright_foreground_material_light));
+        }
+        else
+        {
+            btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
+        }
     }
 }

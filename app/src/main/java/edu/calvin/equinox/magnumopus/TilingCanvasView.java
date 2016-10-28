@@ -2,11 +2,14 @@ package edu.calvin.equinox.magnumopus;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 /**
@@ -14,13 +17,32 @@ import java.util.TreeMap;
  * relevant tiles.
  */
 
-public class TilingCanvasView extends View
+public class TilingCanvasView extends View implements GestureDetector.OnGestureListener
 {
     /**
      * Storage of currently loaded tiles.
      */
     private TreeMap<Coordinate<Integer>, Tile> m_tiles;
-    public String m_brushType = "Paint Brush";
+
+    /**
+     * The current type of brush being used.
+     */
+    private String m_brushType = "Paint Brush";
+
+    /**
+     * Offset from the origin that the canvas is panned to.
+     */
+    private Coordinate<Float> m_curPos;
+
+    /**
+     * Touch gesture processing.
+     */
+    private GestureDetectorCompat m_detector;
+
+    /**
+     * Is canvas in navigation mode.
+     */
+    private boolean m_isNavigating;
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
@@ -38,6 +60,28 @@ public class TilingCanvasView extends View
                      : 0;
             }
         });
+
+        m_curPos = new Coordinate<>(0f, 0f);
+        m_detector = new GestureDetectorCompat(getContext(), this);
+        m_isNavigating = false;
+    }
+
+    /**
+     * Switch between navigation and painting modes.
+     *
+     * @return
+     *  True if canvas is now in navigation mode.
+     */
+    public boolean toggleNavigating()
+    {
+        m_isNavigating = !m_isNavigating;
+        return m_isNavigating;
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh)
+    {
+        loadTiles();
     }
 
     @Override
@@ -45,33 +89,33 @@ public class TilingCanvasView extends View
     {
         super.onDraw(canvas);
 
-        int width = getWidth();
-        int height = getHeight();
-
-        // TODO: Convert this to a foreach m_tiles, and put tile loading/unloading elsewhere.
-        for (int x = 0; x < width; x += Tile.TILE_SIZE)
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
-            for (int y = 0; y < height; y += Tile.TILE_SIZE)
-            {
-                Coordinate<Integer> coord = makeCoord(x, y);
-                Tile tile = m_tiles.get(coord);
-                if (tile == null)
-                {
-                    tile = new Tile(m_brushType);
-                    m_tiles.put(coord, tile);
-                }
-
-                canvas.drawBitmap(
-                        tile.getComposite(),
-                        coord.x, coord.y, null
-                );
-            }
+            Coordinate<Integer> coord = entry.getKey();
+            Tile tile = entry.getValue();
+            canvas.drawBitmap(
+                    tile.getComposite(),
+                    coord.x - m_curPos.x, coord.y - m_curPos.y,
+                    null
+            );
         }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        if (m_isNavigating)
+        {
+            m_detector.onTouchEvent(event);
+            if (event.getAction() == MotionEvent.ACTION_UP)
+            {
+                // Potentially ending a pan operation. Check if tiles
+                // need to be loaded or unloaded.
+                loadTiles();
+            }
+            return true;
+        }
+
         // TODO: Can we optimize this by sending events only to relevant tiles?
         switch (event.getAction())
         {
@@ -80,10 +124,13 @@ public class TilingCanvasView extends View
                 for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
                 {
                     Coordinate<Integer> coord = entry.getKey();
-                    entry.getValue().onTouchMove(event.getX() - coord.x, event.getY() - coord.y);
+                    entry.getValue().onTouchMove(
+                            event.getX() - coord.x + m_curPos.x,
+                            event.getY() - coord.y + m_curPos.y
+                    );
                 }
                 invalidate();
-                break;
+                return true;
 
             case MotionEvent.ACTION_UP:
                 for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
@@ -91,9 +138,93 @@ public class TilingCanvasView extends View
                     entry.getValue().onTouchRelease();
                 }
                 invalidate();
-                break;
+                return true;
+
+            default:
+                return super.onTouchEvent(event);
         }
+    }
+
+    /****************************** Gestures ******************************/
+    @Override
+    public boolean onDown(MotionEvent motionEvent)
+    {
         return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent)
+    {
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent)
+    {
+        return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+    {
+        m_curPos.x += distanceX;
+        m_curPos.y += distanceY;
+        invalidate();
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent)
+    {
+    }
+
+    @Override
+    public boolean onFling(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1)
+    {
+        return true;
+    }
+    /**********************************************************************/
+
+    /**
+     * Check which tiles are currently in memory; unload tiles that are no
+     * longer visible, and load that have become visible.
+     */
+    private void loadTiles()
+    {
+        // Keep a one-tile buffer around the screen.
+        // TODO: Does this allocate too much RAM? Should bounds be tighter?
+        int curX = Math.round(m_curPos.x) - Tile.TILE_SIZE;
+        int curY = Math.round(m_curPos.y) - Tile.TILE_SIZE;
+        int xMax = getWidth() + curX + 2 * Tile.TILE_SIZE;
+        int yMax = getHeight() + curY + 2 * Tile.TILE_SIZE;
+
+        // Remove unneeded tiles.
+        Iterator<TreeMap.Entry<Coordinate<Integer>, Tile>> it = m_tiles.entrySet().iterator();
+        while (it.hasNext())
+        {
+            Coordinate<Integer> coord = it.next().getKey();
+            if (   coord.x > xMax || coord.x + Tile.TILE_SIZE < curX
+                || coord.y > yMax || coord.y + Tile.TILE_SIZE < curY )
+            {
+                // TODO: Save tile to disk/server.
+                it.remove();
+            }
+        }
+
+        // Load new tiles.
+        for (int x = curX; x < xMax; x += Tile.TILE_SIZE)
+        {
+            for (int y = curY; y < yMax; y += Tile.TILE_SIZE)
+            {
+                Coordinate<Integer> coord = makeCoord(x, y);
+                Tile tile = m_tiles.get(coord);
+                if (tile == null)
+                {
+                    // TODO: Load tile from disk/server.
+                    tile = new Tile(m_brushType);
+                    m_tiles.put(coord, tile);
+                }
+            }
+        }
     }
 
     /**
@@ -132,6 +263,7 @@ public class TilingCanvasView extends View
      */
     protected void setBrush(String brushType)
     {
+        m_brushType = brushType;
         for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
             entry.getValue().setBrush(brushType);
