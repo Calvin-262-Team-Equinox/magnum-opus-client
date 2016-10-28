@@ -1,7 +1,7 @@
 package edu.calvin.equinox.magnumopus;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 /**
  * About page.

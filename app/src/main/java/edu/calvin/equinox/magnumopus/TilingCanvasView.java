@@ -9,8 +9,6 @@ import android.view.View;
 import java.util.Comparator;
 import java.util.TreeMap;
 
-import edu.calvin.equinox.magnumopus.brushes.PaintBrush;
-
 /**
  * Render canvas tiles to the view port. Dispatch paint commands to the
  * relevant tiles.
@@ -22,7 +20,7 @@ public class TilingCanvasView extends View
      * Storage of currently loaded tiles.
      */
     private TreeMap<Coordinate<Integer>, Tile> m_tiles;
-    public String brushType = "Paint Brush";
+    public String m_brushType = "Paint Brush";
 
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
@@ -59,7 +57,7 @@ public class TilingCanvasView extends View
                 Tile tile = m_tiles.get(coord);
                 if (tile == null)
                 {
-                    tile = new Tile( brushType );
+                    tile = new Tile(m_brushType);
                     m_tiles.put(coord, tile);
                 }
 
@@ -130,14 +128,13 @@ public class TilingCanvasView extends View
 
     /**
      * Set the brush for each canvas tile
-     * @param brushID
+     * @param brushType
      */
-    protected void setBrush(String brushID)
+    protected void setBrush(String brushType)
     {
         for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
-            entry.getValue().setBrush(brushID);
+            entry.getValue().setBrush(brushType);
         }
     }
-
 }

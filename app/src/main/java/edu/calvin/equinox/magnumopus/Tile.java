@@ -75,7 +75,7 @@ public class Tile
      */
     private Brush m_brush;
 
-    public Tile( String brushType )
+    public Tile(String brushType)
     {
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_drawLayerCanvas = new Canvas(m_drawLayer);
@@ -90,7 +90,7 @@ public class Tile
         m_isDirty = false;
         m_syncState = new AtomicInteger(NOT_SYNCING);
 
-        setBrush( brushType );
+        setBrush(brushType);
     }
 
     /**
@@ -99,16 +99,19 @@ public class Tile
      * @param brushType
      * @return Brush m_brush
      */
-    protected void setBrush(String brushType )
+    protected void setBrush(String brushType)
     {
-        if( brushType.equals( "Paint Brush" ) ){
-            m_brush = new PaintBrush(m_drawLayerCanvas);
-        }
-        else if( brushType.equals( "Pen Brush" ) ){
-            m_brush = new PenBrush(m_drawLayerCanvas);
-        }
-        else {
-            m_brush = new PencilBrush(m_drawLayerCanvas);
+        switch (brushType)
+        {
+            case "Paint Brush":
+                m_brush = new PaintBrush(m_drawLayerCanvas);
+                break;
+            case "Pen Brush":
+                m_brush = new PenBrush(m_drawLayerCanvas);
+                break;
+            default:
+                m_brush = new PencilBrush(m_drawLayerCanvas);
+                break;
         }
     }
 
@@ -200,5 +203,4 @@ public class Tile
             m_syncState.set(NOT_SYNCING);
         }
     }
-
 }
