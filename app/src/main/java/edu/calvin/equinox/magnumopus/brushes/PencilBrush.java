@@ -65,20 +65,26 @@ public class PencilBrush extends Brush
     @Override
     public void onTouchMove(float x, float y)
     {
+        Coordinate<Float> cur = new Coordinate<>(x, y);
         if (m_drawTrack.size() > 0)
         {
             Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
-            float dx = x - prev.x;
-            float dy = y - prev.y;
-            if (Math.abs(dx) < 6 && Math.abs(dy) < 6)
+            float dist = Coordinate.dist(prev, cur);
+            if (dist < 4)
             {
                 // Very little movement.
                 return;
             }
+
+            if (dist > 64)
+            {
+                // Too much movement.
+                onTouchMove((x + prev.x) / 2, (y + prev.y) / 2);
+            }
         }
 
         // Record current position.
-        m_drawTrack.add(new Coordinate<>(x, y));
+        m_drawTrack.add(cur);
 
         int len = m_drawTrack.size();
         // Draw lines from the last n recorded positions to the current position.
@@ -91,7 +97,7 @@ public class PencilBrush extends Brush
             float anchY = prev.y;
             for (int j = i + 1; j < len; ++j)
             {
-                Coordinate<Float> cur = m_drawTrack.get(j);
+                cur = m_drawTrack.get(j);
                 anchX += cur.x;
                 anchY += cur.y;
             }

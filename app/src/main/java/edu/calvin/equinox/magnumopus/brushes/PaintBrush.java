@@ -55,9 +55,30 @@ public class PaintBrush extends Brush
      */
     private ArrayList<Coordinate<Float>> m_bristles;
 
+    /**
+     * Pixel dimension of the brush for painting previews.
+     */
+    private int m_brushSize;
+
+    /**
+     * Rendered brush for fast previews.
+     */
+    private Bitmap m_brushBitmap;
+
+    /**
+     * Index of 1-past the last coordinate drawn for the preview.
+     */
+    private int m_drawnUntil;
+
     public PaintBrush(Canvas canvas)
     {
         m_canvas = canvas;
+
+        m_previewLayer = Bitmap.createBitmap(
+                Tile.TILE_SIZE, Tile.TILE_SIZE,
+                Bitmap.Config.ARGB_8888
+        );
+        m_previewLayerCanvas = new Canvas(m_previewLayer);
 
         m_paint = new Paint();
         m_paint.setStyle(Paint.Style.STROKE);
@@ -85,6 +106,24 @@ public class PaintBrush extends Brush
         m_bristles.add(new Coordinate<>(-13f, -10f));
         m_bristles.add(new Coordinate<>( 18f,  -7f));
         m_bristles.add(new Coordinate<>(  5f, -11f));
+
+        // Render the preview brush.
+        m_brushSize = 64;
+        m_brushBitmap = Bitmap.createBitmap(
+                m_brushSize, m_brushSize,
+                Bitmap.Config.ARGB_8888
+        );
+        Canvas brushCanvas = new Canvas(m_brushBitmap);
+        int brushCenter = m_brushSize / 2;
+        for (Coordinate<Float> bristle : m_bristles)
+        {
+            m_stroke.reset();
+            m_stroke.moveTo(brushCenter + bristle.x, brushCenter + bristle.y);
+            m_stroke.lineTo(brushCenter + bristle.x + 0.01f, brushCenter + bristle.y + 0.01f);
+            brushCanvas.drawPath(m_stroke, m_paint);
+        }
+
+        m_drawnUntil = 0;
     }
 
     @Override
@@ -97,53 +136,14 @@ public class PaintBrush extends Brush
             {
                 return;
             }
-
-            if (m_drawTrack.size() == 1)
-            {
-                // This shift helps reduce the restart 'blip'.
-                double ang = Math.atan2(y - prev.y, x - prev.x);
-                float r = 2;
-                prev.x += r * (float)Math.cos(ang);
-                prev.y += r * (float)Math.sin(ang);
-            }
         }
-        m_drawTrack.add(new Coordinate<>(x, y));
-
-        if (m_drawTrack.size() < 48)
-        {
-            return;
-        }
-
-        // For performance, periodically apply the stroke. It does leave a
-        // 'blip' on each restart, so do this as infrequently as possible.
-        Bitmap preview = getPreview();
-        if (preview != null)
-        {
-            m_canvas.drawBitmap(preview, 0, 0, null);
-        }
-        m_drawTrack.clear();
         m_drawTrack.add(new Coordinate<>(x, y));
     }
 
     @Override
     public void onTouchRelease()
     {
-        Bitmap preview = getPreview();
-        if (preview != null)
-        {
-            m_canvas.drawBitmap(preview, 0, 0, null);
-        }
-        m_drawTrack.clear();
-    }
-
-    @Override
-    public Bitmap getPreview()
-    {
-        if (m_drawTrack.isEmpty())
-        {
-            return null;
-        }
-
+        // Quality render the stroke.
         RectF bounds = null;
         for (Coordinate<Float> bristle : m_bristles)
         {
@@ -152,6 +152,10 @@ public class PaintBrush extends Brush
             Coordinate<Float> coord = m_drawTrack.get(0);
             Coordinate<Float> prev;
 
+            // To smooth the stroke, take 3 consecutive points. Use the
+            // midpoint of the first and second as the start of the curve. Use
+            // the second point as the quadratic anchor. Use the midpoint of
+            // the second and third points as the end of the curve.
             m_stroke.moveTo(coord.x + bristle.x, coord.y + bristle.y);
             for (int j = 1; j < m_drawTrack.size(); ++j)
             {
@@ -159,9 +163,12 @@ public class PaintBrush extends Brush
                 coord = m_drawTrack.get(j);
                 float anchX = (prev.x + coord.x) / 2;
                 float anchY = (prev.y + coord.y) / 2;
-                m_stroke.quadTo(prev.x + bristle.x, prev.y + bristle.y, anchX + bristle.x, anchY + bristle.y);
+                m_stroke.quadTo(
+                        prev.x + bristle.x, prev.y + bristle.y,
+                        anchX + bristle.x, anchY + bristle.y
+                );
             }
-            m_stroke.lineTo(coord.x + bristle.x, coord.y + bristle.y);
+            m_stroke.lineTo(coord.x + bristle.x + 0.01f, coord.y + bristle.y + 0.01f);
 
             if (bounds == null)
             {
@@ -172,25 +179,102 @@ public class PaintBrush extends Brush
                 {
                     // BlurMaskFilter makes this draw operation very expensive, so
                     // avoid it if possible.
-                    return null;
-                }
-
-                if (m_previewLayer == null)
-                {
-                    // Only allocate when absolutely needed.
-                    m_previewLayer = Bitmap.createBitmap(
-                            Tile.TILE_SIZE, Tile.TILE_SIZE,
-                            Bitmap.Config.ARGB_8888
-                    );
-                    m_previewLayerCanvas = new Canvas(m_previewLayer);
-                }
-                else
-                {
-                    m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+                    m_drawTrack.clear();
+                    m_drawnUntil = 0;
+                    return;
                 }
             }
 
-            m_previewLayerCanvas.drawPath(m_stroke, m_paint);
+            m_canvas.drawPath(m_stroke, m_paint);
+        }
+
+        // Clear the cached preview data.
+        m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+        m_drawTrack.clear();
+        m_drawnUntil = 0;
+    }
+
+    @Override
+    public Bitmap getPreview()
+    {
+        if (m_drawTrack.isEmpty())
+        {
+            return null;
+        }
+
+        Coordinate<Float> prevPrev;
+        Coordinate<Float> prev;
+        Coordinate<Float> coord;
+        for (; m_drawnUntil < m_drawTrack.size(); ++m_drawnUntil)
+        {
+            coord = m_drawTrack.get(m_drawnUntil);
+            float x0, y0,
+                  x1, y1,
+                  x2, y2;
+            switch (m_drawnUntil)
+            {
+                case 0:
+                    // Nothing drawn yet, put a dot at current location.
+                    m_previewLayerCanvas.drawBitmap(
+                            m_brushBitmap,
+                            coord.x - (float)m_brushSize / 2,
+                            coord.y - (float)m_brushSize / 2,
+                            null
+                    );
+                    continue;
+
+                case 1:
+                    // Insufficient data for quadratic interpolation, draw
+                    // a line instead.
+                    prev = m_drawTrack.get(0);
+                    x0 = prev.x;
+                    y0 = prev.y;
+                    x2 = (x0 + coord.x) / 2;
+                    y2 = (y0 + coord.y) / 2;
+                    x1 = (x0 + x2) / 2;
+                    y1 = (y0 + y2) / 2;
+                    break;
+
+                default:
+                    // Prepare interpolation anchors.
+                    prev = m_drawTrack.get(m_drawnUntil - 1);
+                    prevPrev = m_drawTrack.get(m_drawnUntil - 2);
+                    x0 = (prevPrev.x + prev.x) / 2;
+                    y0 = (prevPrev.y + prev.y) / 2;
+                    x1 = prev.x;
+                    y1 = prev.y;
+                    x2 = (prev.x + coord.x) / 2;
+                    y2 = (prev.y + coord.y) / 2;
+            }
+
+            coord = new Coordinate<>(x0, y0);
+            prev = new Coordinate<>(x0, y0);
+            // Iterate along the curve.
+            for (float t = 0; t <= 1; t += 0.01f)
+            {
+                Coordinate.quadPoint(
+                        x0, y0,
+                        x1, y1,
+                        x2, y2,
+                        t,
+                        coord
+                );
+
+                if (Coordinate.dist(prev, coord) > 6)
+                {
+                    // Draw point if it is a sufficient distance from the
+                    // previous drawn point.
+                    m_previewLayerCanvas.drawBitmap(
+                            m_brushBitmap,
+                            coord.x - (float)m_brushSize / 2,
+                            coord.y - (float)m_brushSize / 2,
+                            null
+                    );
+
+                    prev.x = coord.x;
+                    prev.y = coord.y;
+                }
+            }
         }
 
         return m_previewLayer;
