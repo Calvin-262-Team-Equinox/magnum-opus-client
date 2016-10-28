@@ -28,4 +28,15 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
         android:entries="@array/brushTypes"/>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_open_with_black_24dp"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/brush_spinner"
+        android:layout_toStartOf="@+id/brush_spinner"
+        android:id="@+id/toggle_nav_btn"
+        android:onClick="toggleNavigation"
+        android:tint="@color/dim_foreground_disabled_material_dark"/>
 </RelativeLayout>
