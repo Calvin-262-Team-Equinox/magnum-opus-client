@@ -1,10 +1,18 @@
 package edu.calvin.equinox.magnumopus;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
+import android.net.Uri;
+import android.os.Environment;
+import android.util.Log;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.calvin.equinox.magnumopus.brushes.Brush;
@@ -74,12 +82,19 @@ public class Tile
      */
     private Brush m_brush;
 
-    public Tile(String brushType)
+    public Tile(String brushType, File file)
     {
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_drawLayerCanvas = new Canvas(m_drawLayer);
 
-        m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        if (file == null){
+            m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        }
+        else{
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inMutable = true;
+            m_syncedLayer = BitmapFactory.decodeFile(file.getAbsolutePath(), bitmapOptions);
+        }
         m_syncedLayerCanvas = new Canvas(m_syncedLayer);
 
         m_composite = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
@@ -133,6 +148,30 @@ public class Tile
         }
 
         return m_composite;
+    }
+
+    /**
+     * Saves composite of tile to a file in a hardcoded folder.
+     * @param x
+     *   The x coordinate of a tile.
+     * @param y
+     *   The y coordinate of a tile.
+     */
+    public void saveComposite(int x, int y){
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/saved_images");
+        myDir.mkdirs();
+        String filename = "Image-"+ x + "-" + y +".png";
+        File file = new File (myDir, filename);
+        if (file.exists ()) file.delete ();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            m_composite.compress(Bitmap.CompressFormat.PNG, 90, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

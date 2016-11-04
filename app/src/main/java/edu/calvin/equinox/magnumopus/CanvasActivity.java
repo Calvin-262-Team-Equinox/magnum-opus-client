@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 /**
  * Activity for drawing on the canvas.
@@ -77,5 +78,12 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         {
             btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
         }
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+        theCanvas.saveTiles();
     }
 }

@@ -2,14 +2,17 @@ package edu.calvin.equinox.magnumopus;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.Environment;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.TreeMap;
 
 /**
@@ -201,12 +204,16 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         Iterator<TreeMap.Entry<Coordinate<Integer>, Tile>> it = m_tiles.entrySet().iterator();
         while (it.hasNext())
         {
-            Coordinate<Integer> coord = it.next().getKey();
+            TreeMap.Entry<Coordinate<Integer>, Tile> entry = it.next();
+            Coordinate<Integer> coord = entry.getKey();
+
             if (   coord.x > xMax || coord.x + Tile.TILE_SIZE < curX
                 || coord.y > yMax || coord.y + Tile.TILE_SIZE < curY )
             {
                 // TODO: Save tile to disk/server.
+                entry.getValue().saveComposite(entry.getKey().x, entry.getKey().y);
                 it.remove();
+
             }
         }
 
@@ -219,11 +226,26 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                 Tile tile = m_tiles.get(coord);
                 if (tile == null)
                 {
+                    String root = Environment.getExternalStorageDirectory().toString();
+                    File myDir = new File(root + "/saved_images");
+                    myDir.mkdirs();
+                    String filename = "Image-"+ x + "-" + y +".png";
+                    File file = new File (myDir, filename);
                     // TODO: Load tile from disk/server.
-                    tile = new Tile(m_brushType);
+                    if (!file.exists ()){
+                        file = null;
+                    }
+                    tile = new Tile(m_brushType, file);
                     m_tiles.put(coord, tile);
                 }
             }
+        }
+    }
+
+    public void saveTiles()
+    {
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet()){
+            entry.getValue().saveComposite(entry.getKey().x, entry.getKey().y);
         }
     }
 
