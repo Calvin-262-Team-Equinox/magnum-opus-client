@@ -8,6 +8,7 @@ import android.graphics.PorterDuff;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.calvin.equinox.magnumopus.brushes.Brush;
+import edu.calvin.equinox.magnumopus.brushes.Eraser;
 import edu.calvin.equinox.magnumopus.brushes.PaintBrush;
 import edu.calvin.equinox.magnumopus.brushes.PenBrush;
 import edu.calvin.equinox.magnumopus.brushes.PencilBrush;
@@ -107,9 +108,14 @@ public class Tile
             case "Pen Brush":
                 m_brush = new PenBrush(m_drawLayerCanvas);
                 break;
-            default:
+            case "Pencil Brush":
                 m_brush = new PencilBrush(m_drawLayerCanvas);
                 break;
+            default:
+                m_brush = new Eraser(m_drawLayerCanvas);
+                break;
+
+
         }
     }
 

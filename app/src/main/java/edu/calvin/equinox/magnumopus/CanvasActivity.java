@@ -71,10 +71,38 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
         if (theCanvas.toggleNavigating())
         {
+
             btn.setColorFilter(getResources().getColor(R.color.bright_foreground_material_light));
         }
         else
         {
+            btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
+        }
+    }
+
+    /**
+     * Switch between erasing and painting modes.
+     *
+     * @param view
+     *  The View that called this.
+     */
+    public void toggleErase(View view)
+    {
+        ImageButton btn = (ImageButton)view;
+        if (btn == null)
+        {
+            return;
+        }
+
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+        if (theCanvas.toggleErasing())
+        {
+            theCanvas.setBrush( "Eraser" );
+            btn.setColorFilter(getResources().getColor(R.color.bright_foreground_material_light));
+        }
+        else
+        {
+            theCanvas.setBrush( "Paint Brush" );
             btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
         }
     }

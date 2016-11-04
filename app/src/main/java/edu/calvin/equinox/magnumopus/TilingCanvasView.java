@@ -44,6 +44,8 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
      */
     private boolean m_isNavigating;
 
+    private boolean m_isErasing;
+
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
@@ -64,6 +66,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_curPos = new Coordinate<>(0f, 0f);
         m_detector = new GestureDetectorCompat(getContext(), this);
         m_isNavigating = false;
+        m_isErasing = false;
     }
 
     /**
@@ -76,6 +79,18 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
     {
         m_isNavigating = !m_isNavigating;
         return m_isNavigating;
+    }
+
+    /**
+     * Switch between erasing and painting modes.
+     *
+     * @return
+     *  True if canvas is now in erasing mode.
+     */
+    public boolean toggleErasing()
+    {
+        m_isErasing = !m_isErasing;
+        return m_isErasing;
     }
 
     @Override
@@ -269,4 +284,5 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             entry.getValue().setBrush(brushType);
         }
     }
+
 }
