@@ -60,14 +60,14 @@ public class Eraser extends Brush
 
         m_paint = new Paint();
         m_paint.setStyle(Paint.Style.STROKE);
-        m_paint.setStrokeWidth(10);
-        m_paint.setPathEffect(new CornerPathEffect(1));
+        m_paint.setStrokeWidth(40);
+        m_paint.setPathEffect(new CornerPathEffect(40));
+        m_paint.setStrokeCap(Paint.Cap.ROUND);
         m_paint.setAntiAlias(true);
         m_paint.setDither(true);
         m_paint.setColor(Color.argb(255, 255, 255, 255));
 
         m_stroke = new Path();
-        m_stroke.setFillType(Path.FillType.WINDING);
 
         m_drawTrack = new ArrayList<>(48);
     }
@@ -123,57 +123,27 @@ public class Eraser extends Brush
             // Only tapped? Draw a dot.
             Coordinate<Float> first = m_drawTrack.get(0);
             m_paint.setStyle(Paint.Style.FILL);
-            m_previewLayerCanvas.drawCircle(first.x, first.y, 5, m_paint);
-            m_previewLayerCanvas.drawCircle(first.x - 2, first.y - 1, 5, m_paint);
+            m_previewLayerCanvas.drawCircle(first.x, first.y, 20, m_paint);
             m_paint.setStyle(Paint.Style.STROKE);
             return m_previewLayer;
         }
 
+        Coordinate<Float> coord = m_drawTrack.get(0);
+        Coordinate<Float> prev;
+
+        // Draw the eraser stroke.
         m_stroke.reset();
-
-        double ang = 2.1;
-        int r = 4;
-
-        // Drawing the eraser stroke as an area, then filling it in has the
-        // problem that if the stroke crosses itself, the overlapped part
-        // is cancelled out. So instead, draw several strokes next to each
-        // other to create a solid area.
-        for (int i = r; i <= 2 * r; i += r)
+        m_stroke.moveTo(coord.x, coord.y);
+        for (int j = 1; j < m_drawTrack.size(); ++j)
         {
-            float dx = (i - r / 2f) * (float)Math.cos(ang);
-            float dy = (i - r / 2f) * (float)Math.sin(ang);
-
-            Coordinate<Float> coord = m_drawTrack.get(0);
-            Coordinate<Float> prev;
-
-            // One side of the eraser stroke.
-            m_stroke.moveTo(coord.x + dx, coord.y + dy);
-            for (int j = 1; j < m_drawTrack.size(); ++j)
-            {
-                prev = coord;
-                coord = m_drawTrack.get(j);
-                float anchX = (prev.x + coord.x) / 2;
-                float anchY = (prev.y + coord.y) / 2;
-                m_stroke.quadTo(prev.x + dx, prev.y + dy, anchX + dx, anchY + dy);
-            }
-            m_stroke.lineTo(coord.x + dx, coord.y + dy);
-
-            // The other side of the eraser stroke.
-            m_stroke.lineTo(coord.x - dx, coord.y - dy);
-            for (int j = m_drawTrack.size() - 2; j >= 0; --j)
-            {
-                prev = coord;
-                coord = m_drawTrack.get(j);
-                float anchX = (prev.x + coord.x) / 2;
-                float anchY = (prev.y + coord.y) / 2;
-                m_stroke.quadTo(prev.x - dx, prev.y - dy, anchX - dx, anchY - dy);
-            }
-            m_stroke.lineTo(coord.x - dx, coord.y - dy);
-
-            m_stroke.close();
-
-            m_previewLayerCanvas.drawPath(m_stroke, m_paint);
+            prev = coord;
+            coord = m_drawTrack.get(j);
+            float anchX = (prev.x + coord.x) / 2;
+            float anchY = (prev.y + coord.y) / 2;
+            m_stroke.quadTo(prev.x, prev.y, anchX, anchY);
         }
+        m_stroke.lineTo(coord.x, coord.y);
+        m_previewLayerCanvas.drawPath(m_stroke, m_paint);
 
         return m_previewLayer;
     }
