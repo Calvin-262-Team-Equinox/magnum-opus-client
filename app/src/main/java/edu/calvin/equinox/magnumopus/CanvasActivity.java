@@ -42,6 +42,14 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
         theCanvas.setBrush(m_brushType);
 
+        if (theCanvas.isErasing())
+        {
+            toggleErase(findViewById(R.id.toggle_erase_btn));
+        }
+        else if (theCanvas.isNavigating())
+        {
+            toggleNavigation(findViewById(R.id.toggle_nav_btn));
+        }
     }
 
     /**
@@ -71,8 +79,12 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
         if (theCanvas.toggleNavigating())
         {
-
             btn.setColorFilter(getResources().getColor(R.color.bright_foreground_material_light));
+
+            if (theCanvas.isErasing())
+            {
+                toggleErase(findViewById(R.id.toggle_erase_btn));
+            }
         }
         else
         {
@@ -99,10 +111,15 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         {
             theCanvas.setBrush( "Eraser" );
             btn.setColorFilter(getResources().getColor(R.color.bright_foreground_material_light));
+
+            if (theCanvas.isNavigating())
+            {
+                toggleNavigation(findViewById(R.id.toggle_nav_btn));
+            }
         }
         else
         {
-            theCanvas.setBrush( "Paint Brush" );
+            theCanvas.setBrush( m_brushType );
             btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
         }
     }

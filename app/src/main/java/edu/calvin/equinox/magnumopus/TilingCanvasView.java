@@ -70,6 +70,17 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
     }
 
     /**
+     * Check if canvas is in navigation mode.
+     *
+     * @return
+     *  True if canvas is in navigation mode.
+     */
+    public boolean isNavigating()
+    {
+        return m_isNavigating;
+    }
+
+    /**
      * Switch between navigation and painting modes.
      *
      * @return
@@ -79,6 +90,17 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
     {
         m_isNavigating = !m_isNavigating;
         return m_isNavigating;
+    }
+
+    /**
+     * Check if canvas is in erasing mode.
+     *
+     * @return
+     *  True if canvas is in erasing mode.
+     */
+    public boolean isErasing()
+    {
+        return m_isErasing;
     }
 
     /**
