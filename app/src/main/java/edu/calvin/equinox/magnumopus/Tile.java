@@ -1,21 +1,18 @@
 package edu.calvin.equinox.magnumopus;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.calvin.equinox.magnumopus.brushes.Brush;
+import edu.calvin.equinox.magnumopus.brushes.Eraser;
 import edu.calvin.equinox.magnumopus.brushes.PaintBrush;
 import edu.calvin.equinox.magnumopus.brushes.PenBrush;
 import edu.calvin.equinox.magnumopus.brushes.PencilBrush;
@@ -87,10 +84,12 @@ public class Tile
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_drawLayerCanvas = new Canvas(m_drawLayer);
 
-        if (file == null){
+        if (file == null)
+        {
             m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         }
-        else{
+        else
+        {
             BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
             bitmapOptions.inMutable = true;
             m_syncedLayer = BitmapFactory.decodeFile(file.getAbsolutePath(), bitmapOptions);
@@ -122,8 +121,11 @@ public class Tile
             case "Pen Brush":
                 m_brush = new PenBrush(m_drawLayerCanvas);
                 break;
-            default:
+            case "Pencil Brush":
                 m_brush = new PencilBrush(m_drawLayerCanvas);
+                break;
+            default:
+                m_brush = new Eraser(m_drawLayerCanvas);
                 break;
         }
     }
@@ -157,19 +159,25 @@ public class Tile
      * @param y
      *   The y coordinate of a tile.
      */
-    public void saveComposite(int x, int y){
+    public void saveComposite(int x, int y)
+    {
         String root = Environment.getExternalStorageDirectory().toString();
         File myDir = new File(root + "/saved_images");
         myDir.mkdirs();
         String filename = "Image-"+ x + "-" + y +".png";
-        File file = new File (myDir, filename);
-        if (file.exists ()) file.delete ();
-        try {
+        File file = new File(myDir, filename);
+        if (file.exists())
+        {
+            file.delete();
+        }
+        try
+        {
             FileOutputStream out = new FileOutputStream(file);
             m_composite.compress(Bitmap.CompressFormat.PNG, 90, out);
             out.flush();
             out.close();
-        } catch (Exception e) {
+        } catch (Exception e)
+        {
             e.printStackTrace();
         }
     }

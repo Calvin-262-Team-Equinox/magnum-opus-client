@@ -12,7 +12,6 @@ import android.view.View;
 import java.io.File;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.TreeMap;
 
 /**
@@ -47,6 +46,8 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
      */
     private boolean m_isNavigating;
 
+    private boolean m_isErasing;
+
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
@@ -67,6 +68,18 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_curPos = new Coordinate<>(0f, 0f);
         m_detector = new GestureDetectorCompat(getContext(), this);
         m_isNavigating = false;
+        m_isErasing = false;
+    }
+
+    /**
+     * Check if canvas is in navigation mode.
+     *
+     * @return
+     *  True if canvas is in navigation mode.
+     */
+    public boolean isNavigating()
+    {
+        return m_isNavigating;
     }
 
     /**
@@ -79,6 +92,29 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
     {
         m_isNavigating = !m_isNavigating;
         return m_isNavigating;
+    }
+
+    /**
+     * Check if canvas is in erasing mode.
+     *
+     * @return
+     *  True if canvas is in erasing mode.
+     */
+    public boolean isErasing()
+    {
+        return m_isErasing;
+    }
+
+    /**
+     * Switch between erasing and painting modes.
+     *
+     * @return
+     *  True if canvas is now in erasing mode.
+     */
+    public boolean toggleErasing()
+    {
+        m_isErasing = !m_isErasing;
+        return m_isErasing;
     }
 
     @Override
@@ -210,10 +246,10 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             if (   coord.x > xMax || coord.x + Tile.TILE_SIZE < curX
                 || coord.y > yMax || coord.y + Tile.TILE_SIZE < curY )
             {
-                // TODO: Save tile to disk/server.
+                // TODO: Save tile to server.
                 entry.getValue().saveComposite(entry.getKey().x, entry.getKey().y);
-                it.remove();
 
+                it.remove();
             }
         }
 
@@ -226,25 +262,31 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                 Tile tile = m_tiles.get(coord);
                 if (tile == null)
                 {
+                    // TODO: Load tile from disk/server.
                     String root = Environment.getExternalStorageDirectory().toString();
                     File myDir = new File(root + "/saved_images");
                     myDir.mkdirs();
                     String filename = "Image-"+ x + "-" + y +".png";
-                    File file = new File (myDir, filename);
-                    // TODO: Load tile from disk/server.
-                    if (!file.exists ()){
+                    File file = new File(myDir, filename);
+                    if (!file.exists())
+                    {
                         file = null;
                     }
                     tile = new Tile(m_brushType, file);
+
                     m_tiles.put(coord, tile);
                 }
             }
         }
     }
 
+    /**
+     * Save each tile to disk.
+     */
     public void saveTiles()
     {
-        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet()){
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+        {
             entry.getValue().saveComposite(entry.getKey().x, entry.getKey().y);
         }
     }
@@ -291,4 +333,5 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             entry.getValue().setBrush(brushType);
         }
     }
+
 }
