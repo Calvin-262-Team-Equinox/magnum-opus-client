@@ -60,8 +60,8 @@ public class Eraser extends Brush
 
         m_paint = new Paint();
         m_paint.setStyle(Paint.Style.STROKE);
-        m_paint.setStrokeWidth(40);
-        m_paint.setPathEffect(new CornerPathEffect(40));
+        m_paint.setStrokeWidth(100);
+        m_paint.setPathEffect(new CornerPathEffect(100));
         m_paint.setStrokeCap(Paint.Cap.ROUND);
         m_paint.setAntiAlias(true);
         m_paint.setDither(true);
@@ -123,7 +123,7 @@ public class Eraser extends Brush
             // Only tapped? Draw a dot.
             Coordinate<Float> first = m_drawTrack.get(0);
             m_paint.setStyle(Paint.Style.FILL);
-            m_previewLayerCanvas.drawCircle(first.x, first.y, 20, m_paint);
+            m_previewLayerCanvas.drawCircle(first.x, first.y, 50, m_paint);
             m_paint.setStyle(Paint.Style.STROKE);
             return m_previewLayer;
         }
