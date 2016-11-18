@@ -73,6 +73,13 @@ public class Eraser extends Brush
     }
 
     @Override
+    public void setColor(int color)
+    {
+
+    }
+
+
+    @Override
     public void onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())

@@ -40,6 +40,14 @@
             android:src="@drawable/ic_pan"
             android:tint="@color/dim_foreground_disabled_material_dark"/>
 
+        <ImageButton
+            android:id="@+id/toggle_color_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="toggleColor"
+            android:src="@drawable/ic_format_color_fill_black_24dp"
+            android:tint="@color/dim_foreground_disabled_material_dark"/>
+
         <Spinner
             android:id="@+id/brush_spinner"
             android:layout_width="wrap_content"
