@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.view.View;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.TreeMap;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 /**
  * Render canvas tiles to the view port. Dispatch paint commands to the
@@ -67,6 +70,17 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_detector = new GestureDetectorCompat(getContext(), this);
         m_isNavigating = false;
         m_isErasing = false;
+
+        postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                syncTiles();
+
+                postDelayed(this, 1000);
+            }
+        }, 1000);
     }
 
     /**
@@ -261,6 +275,20 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                     m_tiles.put(coord, tile);
                 }
             }
+        }
+    }
+
+    private void syncTiles()
+    {
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+        {
+            Tile tile = entry.getValue();
+            Coordinate<Integer> coord = entry.getKey();
+            tile.beginSyncEdits(
+                    "",
+                    "http://153.106.116.63:8085/equinox/update/tile/1/" + coord.x + "/" + coord.y,
+                    this
+            );
         }
     }
 
