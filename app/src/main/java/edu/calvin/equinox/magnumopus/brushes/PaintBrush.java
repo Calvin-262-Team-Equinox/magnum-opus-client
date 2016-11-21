@@ -127,6 +127,13 @@ public class PaintBrush extends Brush
     }
 
     @Override
+    public void setColor(int color)
+    {
+        m_paint.setColor(color);
+    }
+
+
+    @Override
     public void onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())

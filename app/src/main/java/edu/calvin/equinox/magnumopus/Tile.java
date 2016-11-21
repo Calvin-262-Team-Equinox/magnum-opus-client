@@ -74,6 +74,7 @@ public class Tile
      * Current brush this tile is painting with.
      */
     private Brush m_brush;
+    private Color m_color;
 
     public Tile(String brushType)
     {
@@ -117,6 +118,17 @@ public class Tile
 
 
         }
+    }
+
+    /**
+     * Set the color depending on the color type
+     *
+     * @param colorType
+     * @return Color m_color
+     */
+   protected void setColor(int colorType)
+    {
+        m_brush.setColor(colorType);
     }
 
     /**
