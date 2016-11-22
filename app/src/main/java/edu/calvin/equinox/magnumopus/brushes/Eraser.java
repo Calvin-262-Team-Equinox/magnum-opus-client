@@ -7,6 +7,7 @@ import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.RectF;
 
 import java.util.ArrayList;
 
@@ -73,39 +74,48 @@ public class Eraser extends Brush
     }
 
     @Override
-    public void onTouchMove(float x, float y)
+    public boolean onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())
         {
             Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
             if (Math.abs(x - prev.x) < 6 && Math.abs(y - prev.y) < 6)
             {
-                return;
+                return false;
             }
         }
         m_drawTrack.add(new Coordinate<>(x, y));
 
         if (m_drawTrack.size() < 48)
         {
-            return;
+            return false;
         }
 
         // For performance, periodically apply the stroke.
         Bitmap preview = getPreview();
-        m_canvas.drawBitmap(preview, 0, 0, null);
-        m_drawTrack.clear();
-        m_drawTrack.add(new Coordinate<>(x, y));
-    }
-
-    @Override
-    public void onTouchRelease()
-    {
-        Bitmap preview = getPreview();
+        boolean isDirty = false;
         if (preview != null)
         {
             m_canvas.drawBitmap(preview, 0, 0, null);
+            isDirty = true;
         }
         m_drawTrack.clear();
+        m_drawTrack.add(new Coordinate<>(x, y));
+        return isDirty;
+    }
+
+    @Override
+    public boolean onTouchRelease()
+    {
+        Bitmap preview = getPreview();
+        boolean isDirty = false;
+        if (preview != null)
+        {
+            m_canvas.drawBitmap(preview, 0, 0, null);
+            isDirty = true;
+        }
+        m_drawTrack.clear();
+        return isDirty;
     }
 
     @Override
@@ -118,10 +128,17 @@ public class Eraser extends Brush
 
         m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
+        int buffer = Tile.TILE_SIZE / 4;
+
         if (m_drawTrack.size() == 1)
         {
             // Only tapped? Draw a dot.
             Coordinate<Float> first = m_drawTrack.get(0);
+            if (first.x < -buffer || first.y < -buffer
+                    || first.x > Tile.TILE_SIZE + buffer || first.y > Tile.TILE_SIZE + buffer)
+            {
+                return null;
+            }
             m_paint.setStyle(Paint.Style.FILL);
             m_previewLayerCanvas.drawCircle(first.x, first.y, 50, m_paint);
             m_paint.setStyle(Paint.Style.STROKE);
@@ -143,6 +160,14 @@ public class Eraser extends Brush
             m_stroke.quadTo(prev.x, prev.y, anchX, anchY);
         }
         m_stroke.lineTo(coord.x, coord.y);
+
+        RectF bounds = new RectF();
+        m_stroke.computeBounds(bounds, true);
+        if (!bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer))
+        {
+            return null;
+        }
+
         m_previewLayerCanvas.drawPath(m_stroke, m_paint);
 
         return m_previewLayer;

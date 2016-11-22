@@ -175,9 +175,10 @@ public class Tile
      */
     public void onTouchMove(float x, float y)
     {
-        m_brush.onTouchMove(x, y);
-        // TODO: Only set dirty bit if this tile actually changed.
-        m_isDirty = true;
+        if (m_brush.onTouchMove(x, y))
+        {
+            m_isDirty = true;
+        }
     }
 
     /**
@@ -185,7 +186,10 @@ public class Tile
      */
     public void onTouchRelease()
     {
-        m_brush.onTouchRelease();
+        if (m_brush.onTouchRelease())
+        {
+            m_isDirty = true;
+        }
     }
 
     /**
@@ -277,6 +281,7 @@ public class Tile
                     100,
                     new Base64OutputStream(data, Base64.NO_WRAP)
             );
+            m_img.recycle();
             try
             {
                 JSONObject obj = new JSONObject();

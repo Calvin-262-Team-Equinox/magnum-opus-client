@@ -7,6 +7,7 @@ import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PorterDuff;
+import android.graphics.RectF;
 
 import java.util.ArrayList;
 
@@ -72,39 +73,48 @@ public class PenBrush extends Brush
     }
 
     @Override
-    public void onTouchMove(float x, float y)
+    public boolean onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())
         {
             Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
             if (Math.abs(x - prev.x) < 6 && Math.abs(y - prev.y) < 6)
             {
-                return;
+                return false;
             }
         }
         m_drawTrack.add(new Coordinate<>(x, y));
 
         if (m_drawTrack.size() < 48)
         {
-            return;
+            return false;
         }
 
         // For performance, periodically apply the stroke.
         Bitmap preview = getPreview();
-        m_canvas.drawBitmap(preview, 0, 0, null);
-        m_drawTrack.clear();
-        m_drawTrack.add(new Coordinate<>(x, y));
-    }
-
-    @Override
-    public void onTouchRelease()
-    {
-        Bitmap preview = getPreview();
+        boolean isDirty = false;
         if (preview != null)
         {
             m_canvas.drawBitmap(preview, 0, 0, null);
+            isDirty = true;
         }
         m_drawTrack.clear();
+        m_drawTrack.add(new Coordinate<>(x, y));
+        return isDirty;
+    }
+
+    @Override
+    public boolean onTouchRelease()
+    {
+        Bitmap preview = getPreview();
+        boolean isDirty = false;
+        if (preview != null)
+        {
+            m_canvas.drawBitmap(preview, 0, 0, null);
+            isDirty = true;
+        }
+        m_drawTrack.clear();
+        return isDirty;
     }
 
     @Override
@@ -132,6 +142,8 @@ public class PenBrush extends Brush
 
         double ang = 2.1;
         int r = 4;
+
+        RectF bounds = null;
 
         // Drawing the pen stroke as an area, then filling it in has the
         // problem that if the stroke crosses itself, the overlapped part
@@ -170,6 +182,17 @@ public class PenBrush extends Brush
             m_stroke.lineTo(coord.x - dx, coord.y - dy);
 
             m_stroke.close();
+
+            if (bounds == null)
+            {
+                bounds = new RectF();
+                m_stroke.computeBounds(bounds, true);
+                int buffer = Tile.TILE_SIZE / 4;
+                if (!bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer))
+                {
+                    return null;
+                }
+            }
 
             m_previewLayerCanvas.drawPath(m_stroke, m_paint);
         }

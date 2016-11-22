@@ -9,6 +9,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.lang.ref.WeakReference;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.TreeMap;
@@ -71,16 +72,28 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_isNavigating = false;
         m_isErasing = false;
 
-        postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                syncTiles();
+        postDelayed(new TimedUpdater(this), 1000);
+    }
 
-                postDelayed(this, 1000);
+    static final class TimedUpdater implements Runnable
+    {
+        private WeakReference<TilingCanvasView> m_view;
+
+        private TimedUpdater(TilingCanvasView view)
+        {
+            m_view = new WeakReference<>(view);
+        }
+
+        @Override
+        public void run()
+        {
+            TilingCanvasView view = m_view.get();
+            if (view != null)
+            {
+                view.syncTiles();
+                view.postDelayed(this, 1000);
             }
-        }, 1000);
+        }
     }
 
     /**
@@ -271,8 +284,16 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                 if (tile == null)
                 {
                     // TODO: Load tile from disk/server.
-                    tile = new Tile(m_brushType);
-                    m_tiles.put(coord, tile);
+                    try
+                    {
+                        tile = new Tile(m_brushType);
+                        m_tiles.put(coord, tile);
+                    }
+                    catch (OutOfMemoryError e)
+                    {
+                        // Not enough memory currently? Skip tile.
+                        e.printStackTrace();
+                    }
                 }
             }
         }

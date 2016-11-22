@@ -127,21 +127,22 @@ public class PaintBrush extends Brush
     }
 
     @Override
-    public void onTouchMove(float x, float y)
+    public boolean onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())
         {
             Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
             if (Math.abs(x - prev.x) < 6 && Math.abs(y - prev.y) < 6)
             {
-                return;
+                return false;
             }
         }
         m_drawTrack.add(new Coordinate<>(x, y));
+        return false;
     }
 
     @Override
-    public void onTouchRelease()
+    public boolean onTouchRelease()
     {
         // Quality render the stroke.
         RectF bounds = null;
@@ -181,7 +182,7 @@ public class PaintBrush extends Brush
                     // avoid it if possible.
                     m_drawTrack.clear();
                     m_drawnUntil = 0;
-                    return;
+                    return false;
                 }
             }
 
@@ -192,6 +193,7 @@ public class PaintBrush extends Brush
         m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
         m_drawTrack.clear();
         m_drawnUntil = 0;
+        return true;
     }
 
     @Override

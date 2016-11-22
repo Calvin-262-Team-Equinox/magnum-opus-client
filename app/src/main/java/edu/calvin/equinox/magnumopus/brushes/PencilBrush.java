@@ -4,10 +4,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 
 import java.util.ArrayList;
 
 import edu.calvin.equinox.magnumopus.Coordinate;
+import edu.calvin.equinox.magnumopus.Tile;
 
 /**
  * Sketching pencil.
@@ -63,9 +65,10 @@ public class PencilBrush extends Brush
      *  The y coordinate of the current position.
      */
     @Override
-    public void onTouchMove(float x, float y)
+    public boolean onTouchMove(float x, float y)
     {
         Coordinate<Float> cur = new Coordinate<>(x, y);
+        boolean isDirty = false;
         if (m_drawTrack.size() > 0)
         {
             Coordinate<Float> prev = m_drawTrack.get(m_drawTrack.size() - 1);
@@ -73,18 +76,21 @@ public class PencilBrush extends Brush
             if (dist < 4)
             {
                 // Very little movement.
-                return;
+                return false;
             }
 
             if (dist > 64)
             {
                 // Too much movement.
-                onTouchMove((x + prev.x) / 2, (y + prev.y) / 2);
+                isDirty = onTouchMove((x + prev.x) / 2, (y + prev.y) / 2);
             }
         }
 
         // Record current position.
         m_drawTrack.add(cur);
+
+        RectF bounds = new RectF();
+        int buffer = Tile.TILE_SIZE / 4;
 
         int len = m_drawTrack.size();
         // Draw lines from the last n recorded positions to the current position.
@@ -107,26 +113,41 @@ public class PencilBrush extends Brush
             m_stroke.reset();
             m_stroke.moveTo(prev.x, prev.y);
             m_stroke.quadTo(anchX, anchY, x, y);
+
+            m_stroke.computeBounds(bounds, true);
+            isDirty = isDirty || bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer);
+
             m_canvas.drawPath(m_stroke, m_paint);
         }
+
+        return isDirty;
     }
 
     /**
      * Event handler for draw end.
      */
     @Override
-    public void onTouchRelease()
+    public boolean onTouchRelease()
     {
         if (m_drawTrack.size() == 1)
         {
+            int buffer = Tile.TILE_SIZE / 4;
             // The canvas was just tapped, so draw a dot.
             Coordinate<Float> first = m_drawTrack.get(0);
+            m_drawTrack.clear();
+            if (first.x < -buffer || first.y < -buffer
+                    || first.x > Tile.TILE_SIZE + buffer || first.y > Tile.TILE_SIZE + buffer)
+            {
+                return false;
+            }
             m_paint.setStyle(Paint.Style.FILL);
             m_canvas.drawCircle(first.x, first.y, 5, m_paint);
             m_canvas.drawCircle(first.x - 2, first.y - 1, 5, m_paint);
             m_paint.setStyle(Paint.Style.STROKE);
+            return true;
         }
 
         m_drawTrack.clear();
+        return false;
     }
 }
