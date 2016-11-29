@@ -34,6 +34,11 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
     private String m_brushType = "Paint Brush";
 
     /**
+     * The current color being used.
+     */
+    private int m_colorType = 0;
+
+    /**
      * Offset from the origin that the canvas is panned to.
      */
     private Coordinate<Float> m_curPos;
@@ -391,6 +396,19 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
             entry.getValue().setBrush(brushType);
+        }
+    }
+
+    /**
+     * Set the color for each canvas tile
+     * @param colorType
+     */
+    protected void setColor(int colorType)
+    {
+        m_colorType = colorType;
+        for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
+        {
+            entry.getValue().setColor(colorType);
         }
     }
 

@@ -73,6 +73,13 @@ public class PenBrush extends Brush
     }
 
     @Override
+    public void setColor(int color)
+    {
+        m_paint.setColor(color);
+    }
+
+
+    @Override
     public boolean onTouchMove(float x, float y)
     {
         if (!m_drawTrack.isEmpty())

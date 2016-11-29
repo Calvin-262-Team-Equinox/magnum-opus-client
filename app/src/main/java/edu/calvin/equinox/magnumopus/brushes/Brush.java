@@ -33,4 +33,7 @@ public abstract class Brush
     {
         return null;
     }
+
+    public abstract void setColor(int color);
+
 }

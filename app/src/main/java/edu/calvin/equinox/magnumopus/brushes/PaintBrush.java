@@ -88,7 +88,6 @@ public class PaintBrush extends Brush
         m_paint.setMaskFilter(new BlurMaskFilter(3, BlurMaskFilter.Blur.NORMAL));
         m_paint.setAntiAlias(true);
         m_paint.setDither(true);
-        m_paint.setColor(Color.argb(100, 0, 0, 200));
 
         m_stroke = new Path();
 
@@ -107,6 +106,21 @@ public class PaintBrush extends Brush
         m_bristles.add(new Coordinate<>( 18f,  -7f));
         m_bristles.add(new Coordinate<>(  5f, -11f));
 
+        setColor(Color.BLUE);
+
+        m_drawnUntil = 0;
+    }
+
+    @Override
+    public void setColor(int color)
+    {
+        m_paint.setColor(Color.argb(
+                Math.min(100, Color.alpha(color)),
+                Color.red(color),
+                Color.green(color),
+                Color.blue(color)
+        ));
+
         // Render the preview brush.
         m_brushSize = 64;
         m_brushBitmap = Bitmap.createBitmap(
@@ -122,9 +136,8 @@ public class PaintBrush extends Brush
             m_stroke.lineTo(brushCenter + bristle.x + 0.01f, brushCenter + bristle.y + 0.01f);
             brushCanvas.drawPath(m_stroke, m_paint);
         }
-
-        m_drawnUntil = 0;
     }
+
 
     @Override
     public boolean onTouchMove(float x, float y)

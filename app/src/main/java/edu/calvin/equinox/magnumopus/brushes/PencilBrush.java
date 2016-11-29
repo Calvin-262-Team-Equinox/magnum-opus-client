@@ -56,6 +56,18 @@ public class PencilBrush extends Brush
         m_drawTrack = new ArrayList<>(64);
     }
 
+    @Override
+    public void setColor(int color)
+    {
+        m_paint.setColor(Color.argb(
+                Math.min(100, Color.alpha(color)),
+                Color.red(color),
+                Color.green(color),
+                Color.blue(color)
+        ));
+    }
+
+
     /**
      * Event handler for draw movement.
      *
