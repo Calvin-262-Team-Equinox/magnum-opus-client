@@ -61,10 +61,6 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         {
             toggleNavigation(findViewById(R.id.toggle_nav_btn));
         }
-        else if (theCanvas.isColoring())
-        {
-            toggleColor(findViewById(R.id.toggle_color_btn));
-        }
     }
 
     /**
@@ -139,46 +135,33 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         }
     }
 
-    public void toggleColor(View view)
+    public void chooseColor(View view)
     {
-        ImageButton btn = (ImageButton)view;
-        if (btn == null)
-        {
-            return;
-        }
-
-        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
-        if (theCanvas.toggleColoring())
-        {
-
-            ColorPickerDialogBuilder
-                    .with(this)
-                    .setTitle("Choose color")
-                    .initialColor(Color.BLUE)
-                    .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
-                    .density(12)
-                    .setOnColorSelectedListener(new OnColorSelectedListener() {
-                        @Override
-                        public void onColorSelected(int selectedColor) {
-                            Log.d("ColorText", "onColorSelected: 0x" + Integer.toHexString(selectedColor));
-                        }
-                    })
-                    .setPositiveButton("ok", new ColorPickerClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
-                            TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
-                            theCanvas.setColor(selectedColor);
-                        }
-                    })
-                    .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                        }
-                    })
-                    .build()
-                    .show();
-
-
-        }
+        ColorPickerDialogBuilder
+                .with(this)
+                .setTitle("Choose color")
+                .initialColor(Color.BLUE)
+                .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                .density(12)
+                .setOnColorSelectedListener(new OnColorSelectedListener() {
+                    @Override
+                    public void onColorSelected(int selectedColor) {
+                        Log.d("ColorText", "onColorSelected: 0x" + Integer.toHexString(selectedColor));
+                    }
+                })
+                .setPositiveButton("ok", new ColorPickerClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
+                        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+                        theCanvas.setColor(selectedColor);
+                    }
+                })
+                .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                })
+                .build()
+                .show();
     }
 }

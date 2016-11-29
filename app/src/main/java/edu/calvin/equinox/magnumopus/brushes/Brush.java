@@ -16,12 +16,12 @@ public abstract class Brush
      * @param y
      *  The y coordinate of the current position.
      */
-    public abstract void onTouchMove(float x, float y);
+    public abstract boolean onTouchMove(float x, float y);
 
     /**
      * Event handler for draw end.
      */
-    public abstract void onTouchRelease();
+    public abstract boolean onTouchRelease();
 
     /**
      * Get a preview of what this brush is drawing, but has not committed yet.
