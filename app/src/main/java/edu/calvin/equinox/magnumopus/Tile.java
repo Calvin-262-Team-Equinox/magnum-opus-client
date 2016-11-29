@@ -212,9 +212,7 @@ public class Tile
             else
             {
                 // Dispatch m_syncVersion to server.
-
-                // TODO: Not this.
-                m_syncState.set(NOT_SYNCING);
+                new GetTileSyncTask(m_syncVersion, view).execute(syncURL);
             }
         }
     }
@@ -253,6 +251,7 @@ public class Tile
         Bitmap m_img;
         int m_version;
         WeakReference<View> m_view;
+        String theUrl = "";
 
         public PostTileUpdateTask(Bitmap img, int version, View view)
         {
@@ -264,10 +263,12 @@ public class Tile
         @Override
         protected JSONObject doInBackground(String... params)
         {
+            theUrl = params[0];
+
             URL apiURL;
             try
             {
-                apiURL = new URL(params[0]);
+                apiURL = new URL(theUrl);
             } catch (MalformedURLException e)
             {
                 e.printStackTrace();
@@ -304,8 +305,8 @@ public class Tile
                 HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(15000);
-                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(10000); // 10 sec
+                conn.setReadTimeout(10000);    // 10 sec
                 conn.setRequestProperty("Content-Type", "application/json; charset=utf8");
 
                 OutputStream os = conn.getOutputStream();
@@ -363,6 +364,100 @@ public class Tile
                     version = tileData.getInt("version");
                     byte[] rawData = Base64.decode(tileData.getString("data"), Base64.DEFAULT);
                     data = BitmapFactory.decodeByteArray(rawData, 0, rawData.length);
+                } catch (JSONException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+
+            completeSyncEdits(data, version, m_view.get());
+        }
+    }
+
+    private class GetTileSyncTask extends AsyncTask<String, Void, JSONObject>
+    {
+        int m_version;
+        WeakReference<View> m_view;
+        String theUrl = "";
+
+        public GetTileSyncTask(int version, View view)
+        {
+            m_version = version;
+            m_view = new WeakReference<>(view);
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... params)
+        {
+            theUrl = params[0] + "/" + m_version;
+
+            URL apiURL;
+            try
+            {
+                apiURL = new URL(theUrl);
+            } catch (MalformedURLException e)
+            {
+                e.printStackTrace();
+                return null;
+            }
+
+            JSONObject output = null;
+
+            try
+            {
+                HttpURLConnection conn = (HttpURLConnection)apiURL.openConnection();
+                conn.setConnectTimeout(10000);
+                conn.setReadTimeout(10000);
+
+                if (conn.getResponseCode() == HttpURLConnection.HTTP_OK)
+                {
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(conn.getInputStream())
+                    );
+                    StringBuilder result = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null)
+                    {
+                        result.append(line);
+                    }
+
+                    try
+                    {
+                        output = new JSONObject(result.toString());
+                    } catch (JSONException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                    Log.e("GetTileSyncTask", "HTTP error " + conn.getResponseCode());
+                }
+                conn.disconnect();
+
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+            return output;
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject tileData)
+        {
+            int version = 0;
+            Bitmap data = null;
+            if (tileData != null)
+            {
+                try
+                {
+                    version = tileData.getInt("version");
+                    if (version > m_version)
+                    {
+                        byte[] rawData = Base64.decode(tileData.getString("data"), Base64.DEFAULT);
+                        data = BitmapFactory.decodeByteArray(rawData, 0, rawData.length);
+                    }
                 } catch (JSONException e)
                 {
                     e.printStackTrace();

@@ -91,7 +91,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             if (view != null)
             {
                 view.syncTiles();
-                view.postDelayed(this, 1000);
+                view.postDelayed(this, 5000);
             }
         }
     }
@@ -291,7 +291,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                     }
                     catch (OutOfMemoryError e)
                     {
-                        // Not enough memory currently? Skip tile.
+                        // Not enough memory currently?
                         e.printStackTrace();
                     }
                 }
@@ -306,7 +306,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             Tile tile = entry.getValue();
             Coordinate<Integer> coord = entry.getKey();
             tile.beginSyncEdits(
-                    "",
+                    "http://cs262.cs.calvin.edu:8085/equinox/tile/1/" + coord.x + "/" + coord.y,
                     "http://cs262.cs.calvin.edu:8085/equinox/update/tile/1/" + coord.x + "/" + coord.y,
                     this
             );
