@@ -7,7 +7,6 @@ import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.util.Base64;
-import android.util.Base64InputStream;
 import android.util.Base64OutputStream;
 import android.util.Log;
 import android.view.View;
@@ -15,13 +14,10 @@ import android.view.View;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -99,12 +95,21 @@ public class Tile
      */
     private Brush m_brush;
 
-    public Tile(String brushType)
+    public Tile(String brushType, byte[] cacheImg)
     {
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
         m_drawLayerCanvas = new Canvas(m_drawLayer);
 
-        m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        if (cacheImg != null)
+        {
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inMutable = true;
+            m_syncedLayer = BitmapFactory.decodeByteArray(cacheImg, 0, cacheImg.length, bitmapOptions);
+        }
+        if (m_syncedLayer == null)
+        {
+            m_syncedLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
+        }
         m_syncedLayerCanvas = new Canvas(m_syncedLayer);
 
         m_composite = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);
@@ -163,6 +168,19 @@ public class Tile
         }
 
         return m_composite;
+    }
+
+    public Bitmap getSolidComposite()
+    {
+        getComposite();
+        m_compositeCanvas.drawColor(Color.WHITE, PorterDuff.Mode.DST_OVER);
+
+        return m_composite;
+    }
+
+    public int getVersion()
+    {
+        return m_syncVersion;
     }
 
     /**

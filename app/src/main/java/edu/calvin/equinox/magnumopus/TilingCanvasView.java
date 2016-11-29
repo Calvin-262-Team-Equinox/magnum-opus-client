@@ -1,20 +1,20 @@
 package edu.calvin.equinox.magnumopus;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.support.v4.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.io.ByteArrayOutputStream;
 import java.lang.ref.WeakReference;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.TreeMap;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
 
 /**
  * Render canvas tiles to the view port. Dispatch paint commands to the
@@ -50,9 +50,13 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
 
     private boolean m_isErasing;
 
+    private Random m_rand;
+
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
+
+        Cache.INSTANCE.init(getContext().getCacheDir());
 
         m_tiles = new TreeMap<>(new Comparator<Coordinate<Integer>>()
         {
@@ -71,6 +75,8 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_detector = new GestureDetectorCompat(getContext(), this);
         m_isNavigating = false;
         m_isErasing = false;
+
+        m_rand = new Random(System.nanoTime());
 
         postDelayed(new TimedUpdater(this), 1000);
     }
@@ -261,15 +267,31 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         int xMax = getWidth() + curX + 2 * Tile.TILE_SIZE;
         int yMax = getHeight() + curY + 2 * Tile.TILE_SIZE;
 
+        int canvasID = 1;
+
         // Remove unneeded tiles.
         Iterator<TreeMap.Entry<Coordinate<Integer>, Tile>> it = m_tiles.entrySet().iterator();
         while (it.hasNext())
         {
-            Coordinate<Integer> coord = it.next().getKey();
+            TreeMap.Entry<Coordinate<Integer>, Tile> entry = it.next();
+            Coordinate<Integer> coord = entry.getKey();
             if (   coord.x > xMax || coord.x + Tile.TILE_SIZE < curX
                 || coord.y > yMax || coord.y + Tile.TILE_SIZE < curY )
             {
                 // TODO: Save tile to disk/server.
+                Tile tile = entry.getValue();
+                if (tile.getVersion() > 0)
+                {
+                    Bitmap img = entry.getValue().getSolidComposite();
+                    ByteArrayOutputStream data = new ByteArrayOutputStream();
+                    img.compress(
+                            Bitmap.CompressFormat.JPEG,
+                            5,
+                            data
+                    );
+                    Cache.INSTANCE.put(canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
+                }
+
                 it.remove();
             }
         }
@@ -286,7 +308,10 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                     // TODO: Load tile from disk/server.
                     try
                     {
-                        tile = new Tile(m_brushType);
+                        tile = new Tile(
+                                m_brushType,
+                                Cache.INSTANCE.get(canvasID + "-" + coord.x + "-" + coord.y)
+                        );
                         m_tiles.put(coord, tile);
                     }
                     catch (OutOfMemoryError e)
@@ -301,15 +326,28 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
 
     private void syncTiles()
     {
+        int canvasID = 1;
+
         for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
             Tile tile = entry.getValue();
             Coordinate<Integer> coord = entry.getKey();
             tile.beginSyncEdits(
-                    "http://cs262.cs.calvin.edu:8085/equinox/tile/1/" + coord.x + "/" + coord.y,
-                    "http://cs262.cs.calvin.edu:8085/equinox/update/tile/1/" + coord.x + "/" + coord.y,
+                    "http://cs262.cs.calvin.edu:8085/equinox/tile/" + canvasID + "/" + coord.x + "/" + coord.y,
+                    "http://cs262.cs.calvin.edu:8085/equinox/update/tile/" + canvasID + "/" + coord.x + "/" + coord.y,
                     this
             );
+            if (tile.getVersion() > 0 && m_rand.nextDouble() < 0.1)
+            {
+                Bitmap img = entry.getValue().getSolidComposite();
+                ByteArrayOutputStream data = new ByteArrayOutputStream();
+                img.compress(
+                        Bitmap.CompressFormat.JPEG,
+                        5,
+                        data
+                );
+                Cache.INSTANCE.put(canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
+            }
         }
     }
 
