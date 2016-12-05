@@ -135,6 +135,12 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         }
     }
 
+    /**
+     * Change the color of the brush
+     *
+     * @param view
+     *  The View that called this.
+     */
     public void chooseColor(View view)
     {
         ColorPickerDialogBuilder
@@ -163,5 +169,18 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
                 })
                 .build()
                 .show();
+
+        //Turn off the eraser or panning button if you pick a new color
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+
+        if(theCanvas.isErasing())
+        {
+            toggleErase(findViewById(R.id.toggle_erase_btn));
+        }
+
+        if (theCanvas.isNavigating())
+        {
+            toggleNavigation(findViewById(R.id.toggle_nav_btn));
+        }
     }
 }
