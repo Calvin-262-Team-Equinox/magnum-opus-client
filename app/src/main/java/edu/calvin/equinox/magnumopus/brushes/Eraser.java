@@ -75,22 +75,13 @@ public class Eraser extends Brush
         }
         m_drawTrack.add(new Coordinate<>(x, y));
 
-        if (m_drawTrack.size() < 48)
-        {
-            return false;
-        }
-
-        // For performance, periodically apply the stroke.
-        boolean isDirty = doDraw(m_canvas);
-        m_drawTrack.clear();
-        m_drawTrack.add(new Coordinate<>(x, y));
-        return isDirty;
+        return m_drawTrack.size() > 1 && doDraw(m_canvas, true);
     }
 
     @Override
     public boolean onTouchRelease()
     {
-        boolean isDirty = doDraw(m_canvas);
+        boolean isDirty = doDraw(m_canvas, false);
         m_drawTrack.clear();
         return isDirty;
     }
@@ -98,10 +89,21 @@ public class Eraser extends Brush
     @Override
     public void drawPreview(Canvas previewCanvas)
     {
-        doDraw(previewCanvas);
+        doDraw(previewCanvas, false);
     }
 
-    private boolean doDraw(Canvas canvas)
+    /**
+     * Draw most recent segment to the canvas.
+     *
+     * @param canvas
+     *  Canvas to draw on.
+     * @param partial
+     *  Should stroke be treated as in-progress.
+     *
+     * @return
+     *  True if canvas was modified.
+     */
+    private boolean doDraw(Canvas canvas, boolean partial)
     {
         if (m_drawTrack.isEmpty())
         {
@@ -125,21 +127,41 @@ public class Eraser extends Brush
             return true;
         }
 
-        Coordinate<Float> coord = m_drawTrack.get(0);
-        Coordinate<Float> prev;
+        int numPoints = m_drawTrack.size();
+        Coordinate<Float> coord = m_drawTrack.get(numPoints - 1);
+        Coordinate<Float> prev = m_drawTrack.get(numPoints - 2);
+        float anchX = (prev.x + coord.x) / 2;
+        float anchY = (prev.y + coord.y) / 2;
 
-        // Draw the eraser stroke.
         m_stroke.reset();
-        m_stroke.moveTo(coord.x, coord.y);
-        for (int j = 1; j < m_drawTrack.size(); ++j)
+        if (numPoints == 2)
         {
-            prev = coord;
-            coord = m_drawTrack.get(j);
-            float anchX = (prev.x + coord.x) / 2;
-            float anchY = (prev.y + coord.y) / 2;
+            // Straight line at beginning of stroke.
+            if (!partial)
+            {
+                // To the end of the stroke.
+                anchX = coord.x;
+                anchY = coord.y;
+            }
+            m_stroke.moveTo(prev.x, prev.y);
+            m_stroke.lineTo(anchX, anchY);
+        }
+        else if (partial)
+        {
+            // Curved line in middle of stroke.
+            Coordinate<Float> prevPrev = m_drawTrack.get(numPoints - 3);
+            float prevAnchX = (prevPrev.x + prev.x) / 2;
+            float prevAnchY = (prevPrev.y + prev.y) / 2;
+
+            m_stroke.moveTo(prevAnchX, prevAnchY);
             m_stroke.quadTo(prev.x, prev.y, anchX, anchY);
         }
-        m_stroke.lineTo(coord.x, coord.y);
+        else
+        {
+            // Straight line at end of stroke.
+            m_stroke.moveTo(anchX, anchY);
+            m_stroke.lineTo(coord.x, coord.y);
+        }
 
         RectF bounds = new RectF();
         m_stroke.computeBounds(bounds, true);
