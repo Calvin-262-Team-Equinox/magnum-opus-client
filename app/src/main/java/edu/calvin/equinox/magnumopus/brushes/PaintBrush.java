@@ -209,23 +209,31 @@ public class PaintBrush extends Brush
         return true;
     }
 
+    private boolean inBounds(Coordinate<Float> coord)
+    {
+        float lower = -m_brushSize / 2;
+        float upper = Tile.TILE_SIZE + m_brushSize / 2;
+        return coord.x > lower && coord.x < upper
+                && coord.y > lower && coord.y < upper;
+    }
+
     @Override
-    public Bitmap getPreview()
+    public void drawPreview(Canvas previewCanvas)
     {
         if (m_drawTrack.isEmpty())
         {
-            return null;
+            return;
         }
 
         Coordinate<Float> prevPrev;
         Coordinate<Float> prev;
         Coordinate<Float> coord;
+        float x0, y0,
+              x1, y1,
+              x2, y2;
         for (; m_drawnUntil < m_drawTrack.size(); ++m_drawnUntil)
         {
             coord = m_drawTrack.get(m_drawnUntil);
-            float x0, y0,
-                  x1, y1,
-                  x2, y2;
             switch (m_drawnUntil)
             {
                 case 0:
@@ -275,7 +283,7 @@ public class PaintBrush extends Brush
                         coord
                 );
 
-                if (Coordinate.dist(prev, coord) > 6)
+                if (inBounds(coord) && Coordinate.dist(prev, coord) > 6)
                 {
                     // Draw point if it is a sufficient distance from the
                     // previous drawn point.
@@ -292,6 +300,56 @@ public class PaintBrush extends Brush
             }
         }
 
-        return m_previewLayer;
+        previewCanvas.drawBitmap(m_previewLayer, 0, 0, null);
+
+        if (m_drawTrack.size() > 1)
+        {
+            coord = m_drawTrack.get(m_drawTrack.size() - 1);
+            prev = m_drawTrack.get(m_drawTrack.size() - 2);
+            float totalDist = Coordinate.dist(prev, coord);
+            if (totalDist <= 6)
+            {
+                return;
+            }
+
+            x0 = (prev.x + coord.x) / 2;
+            y0 = (prev.y + coord.y) / 2;
+            x1 = coord.x;
+            y1 = coord.y;
+            float scale = 128 / totalDist;
+            x2 = scale * (x1 - x0) + x1;
+            y2 = scale * (y1 - y0) + y1;
+            x1 = (x0 + x2) / 2;
+            y1 = (y0 + y2) / 2;
+
+            coord = new Coordinate<>(x0, y0);
+            prev = new Coordinate<>(x0, y0);
+            // Iterate along the curve.
+            for (float t = 0; t <= 1; t += 0.03f)
+            {
+                Coordinate.quadPoint(
+                        x0, y0,
+                        x1, y1,
+                        x2, y2,
+                        t,
+                        coord
+                );
+
+                if (inBounds(coord) && Coordinate.dist(prev, coord) > 6)
+                {
+                    // Draw point if it is a sufficient distance from the
+                    // previous drawn point.
+                    previewCanvas.drawBitmap(
+                            m_brushBitmap,
+                            coord.x - (float)m_brushSize / 2,
+                            coord.y - (float)m_brushSize / 2,
+                            null
+                    );
+
+                    prev.x = coord.x;
+                    prev.y = coord.y;
+                }
+            }
+        }
     }
 }

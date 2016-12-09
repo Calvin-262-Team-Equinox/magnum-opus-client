@@ -1,12 +1,10 @@
 package edu.calvin.equinox.magnumopus.brushes;
 
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PorterDuff;
 import android.graphics.RectF;
 
 import java.util.ArrayList;
@@ -20,15 +18,6 @@ import edu.calvin.equinox.magnumopus.Tile;
 
 public class Eraser extends Brush
 {
-    /**
-     * Bitmap of active user drawings.
-     */
-    private Bitmap m_previewLayer;
-    /**
-     * Canvas for active drawing.
-     */
-    private Canvas m_previewLayerCanvas;
-
     /**
      * Canvas this brush paints on.
      */
@@ -51,12 +40,6 @@ public class Eraser extends Brush
 
     public Eraser(Canvas canvas)
     {
-        m_previewLayer = Bitmap.createBitmap(
-                Tile.TILE_SIZE, Tile.TILE_SIZE,
-                Bitmap.Config.ARGB_8888
-        );
-        m_previewLayerCanvas = new Canvas(m_previewLayer);
-
         m_canvas = canvas;
 
         m_paint = new Paint();
@@ -98,13 +81,7 @@ public class Eraser extends Brush
         }
 
         // For performance, periodically apply the stroke.
-        Bitmap preview = getPreview();
-        boolean isDirty = false;
-        if (preview != null)
-        {
-            m_canvas.drawBitmap(preview, 0, 0, null);
-            isDirty = true;
-        }
+        boolean isDirty = doDraw(m_canvas);
         m_drawTrack.clear();
         m_drawTrack.add(new Coordinate<>(x, y));
         return isDirty;
@@ -113,26 +90,23 @@ public class Eraser extends Brush
     @Override
     public boolean onTouchRelease()
     {
-        Bitmap preview = getPreview();
-        boolean isDirty = false;
-        if (preview != null)
-        {
-            m_canvas.drawBitmap(preview, 0, 0, null);
-            isDirty = true;
-        }
+        boolean isDirty = doDraw(m_canvas);
         m_drawTrack.clear();
         return isDirty;
     }
 
     @Override
-    public Bitmap getPreview()
+    public void drawPreview(Canvas previewCanvas)
+    {
+        doDraw(previewCanvas);
+    }
+
+    private boolean doDraw(Canvas canvas)
     {
         if (m_drawTrack.isEmpty())
         {
-            return null;
+            return false;
         }
-
-        m_previewLayerCanvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
 
         int buffer = Tile.TILE_SIZE / 4;
 
@@ -143,12 +117,12 @@ public class Eraser extends Brush
             if (first.x < -buffer || first.y < -buffer
                     || first.x > Tile.TILE_SIZE + buffer || first.y > Tile.TILE_SIZE + buffer)
             {
-                return null;
+                return false;
             }
             m_paint.setStyle(Paint.Style.FILL);
-            m_previewLayerCanvas.drawCircle(first.x, first.y, 50, m_paint);
+            canvas.drawCircle(first.x, first.y, 50, m_paint);
             m_paint.setStyle(Paint.Style.STROKE);
-            return m_previewLayer;
+            return true;
         }
 
         Coordinate<Float> coord = m_drawTrack.get(0);
@@ -171,11 +145,11 @@ public class Eraser extends Brush
         m_stroke.computeBounds(bounds, true);
         if (!bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer))
         {
-            return null;
+            return false;
         }
 
-        m_previewLayerCanvas.drawPath(m_stroke, m_paint);
+        canvas.drawPath(m_stroke, m_paint);
 
-        return m_previewLayer;
+        return true;
     }
 }
