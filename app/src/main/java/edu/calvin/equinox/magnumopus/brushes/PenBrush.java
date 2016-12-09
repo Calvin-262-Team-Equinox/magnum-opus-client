@@ -74,22 +74,13 @@ public class PenBrush extends Brush
         }
         m_drawTrack.add(new Coordinate<>(x, y));
 
-        if (m_drawTrack.size() < 48)
-        {
-            return false;
-        }
-
-        // For performance, periodically apply the stroke.
-        boolean isDirty = doDraw(m_canvas);
-        m_drawTrack.clear();
-        m_drawTrack.add(new Coordinate<>(x, y));
-        return isDirty;
+        return m_drawTrack.size() > 1 && doDraw(m_canvas, true);
     }
 
     @Override
     public boolean onTouchRelease()
     {
-        boolean isDirty = doDraw(m_canvas);
+        boolean isDirty = doDraw(m_canvas, false);
         m_drawTrack.clear();
         return isDirty;
     }
@@ -97,20 +88,40 @@ public class PenBrush extends Brush
     @Override
     public void drawPreview(Canvas previewCanvas)
     {
-        doDraw(previewCanvas);
+        doDraw(previewCanvas, false);
     }
 
-    private boolean doDraw(Canvas canvas)
+    /**
+     * Draw most recent segment to the canvas.
+     *
+     * @param canvas
+     *  Canvas to draw on.
+     * @param partial
+     *  Should stroke be treated as in-progress.
+     *
+     * @return
+     *  True if canvas was modified.
+     */
+    private boolean doDraw(Canvas canvas, boolean partial)
     {
         if (m_drawTrack.isEmpty())
         {
             return false;
         }
 
+        int buffer = Tile.TILE_SIZE / 4;
+
         if (m_drawTrack.size() == 1)
         {
             // Only tapped? Draw a dot.
             Coordinate<Float> first = m_drawTrack.get(0);
+
+            if (first.x < -buffer || first.y < -buffer
+                    || first.x > Tile.TILE_SIZE + buffer || first.y > Tile.TILE_SIZE + buffer)
+            {
+                return false;
+            }
+
             m_paint.setStyle(Paint.Style.FILL);
             canvas.drawCircle(first.x, first.y, 5, m_paint);
             canvas.drawCircle(first.x - 2, first.y - 1, 5, m_paint);
@@ -131,35 +142,48 @@ public class PenBrush extends Brush
         // other to create a solid area.
         for (int i = r; i <= 2 * r; i += r)
         {
-            float dx = (i - r / 2f) * (float)Math.cos(ang);
-            float dy = (i - r / 2f) * (float)Math.sin(ang);
+            float dx = (i - r / 2f) * (float) Math.cos(ang);
+            float dy = (i - r / 2f) * (float) Math.sin(ang);
 
-            Coordinate<Float> coord = m_drawTrack.get(0);
-            Coordinate<Float> prev;
-
-            // One side of the pen stroke.
-            m_stroke.moveTo(coord.x + dx, coord.y + dy);
-            for (int j = 1; j < m_drawTrack.size(); ++j)
+            int numPoints = m_drawTrack.size();
+            Coordinate<Float> coord = m_drawTrack.get(numPoints - 1);
+            Coordinate<Float> prev = m_drawTrack.get(numPoints - 2);
+            float anchX = (prev.x + coord.x) / 2;
+            float anchY = (prev.y + coord.y) / 2;
+            if (numPoints == 2)
             {
-                prev = coord;
-                coord = m_drawTrack.get(j);
-                float anchX = (prev.x + coord.x) / 2;
-                float anchY = (prev.y + coord.y) / 2;
+                // Straight line at beginning of stroke.
+                if (!partial)
+                {
+                    // To the end of the stroke.
+                    anchX = coord.x;
+                    anchY = coord.y;
+                }
+                m_stroke.moveTo(prev.x + dx, prev.y + dy);
+                m_stroke.lineTo(anchX + dx, anchY + dy);
+                m_stroke.lineTo(anchX - dx, anchY - dy);
+                m_stroke.lineTo(prev.x - dx, prev.y - dy);
+            }
+            else if (partial)
+            {
+                // Curved line in middle of stroke.
+                Coordinate<Float> prevPrev = m_drawTrack.get(numPoints - 3);
+                float prevAnchX = (prevPrev.x + prev.x) / 2;
+                float prevAnchY = (prevPrev.y + prev.y) / 2;
+
+                m_stroke.moveTo(prevAnchX + dx, prevAnchY + dy);
                 m_stroke.quadTo(prev.x + dx, prev.y + dy, anchX + dx, anchY + dy);
+                m_stroke.lineTo(anchX - dx, anchY - dy);
+                m_stroke.quadTo(prev.x - dx, prev.y - dy, prevAnchX - dx, prevAnchY - dy);
             }
-            m_stroke.lineTo(coord.x + dx, coord.y + dy);
-
-            // The other side of the pen stroke.
-            m_stroke.lineTo(coord.x - dx, coord.y - dy);
-            for (int j = m_drawTrack.size() - 2; j >= 0; --j)
+            else
             {
-                prev = coord;
-                coord = m_drawTrack.get(j);
-                float anchX = (prev.x + coord.x) / 2;
-                float anchY = (prev.y + coord.y) / 2;
-                m_stroke.quadTo(prev.x - dx, prev.y - dy, anchX - dx, anchY - dy);
+                // Straight line at end of stroke.
+                m_stroke.moveTo(anchX + dx, anchY + dy);
+                m_stroke.lineTo(coord.x + dx, coord.y + dy);
+                m_stroke.lineTo(coord.x - dx, coord.y - dy);
+                m_stroke.lineTo(anchX - dx, anchY - dy);
             }
-            m_stroke.lineTo(coord.x - dx, coord.y - dy);
 
             m_stroke.close();
 
@@ -167,15 +191,14 @@ public class PenBrush extends Brush
             {
                 bounds = new RectF();
                 m_stroke.computeBounds(bounds, true);
-                int buffer = Tile.TILE_SIZE / 4;
                 if (!bounds.intersect(-buffer, -buffer, Tile.TILE_SIZE + buffer, Tile.TILE_SIZE + buffer))
                 {
                     return false;
                 }
             }
-
-            canvas.drawPath(m_stroke, m_paint);
         }
+
+        canvas.drawPath(m_stroke, m_paint);
         return true;
     }
 }
