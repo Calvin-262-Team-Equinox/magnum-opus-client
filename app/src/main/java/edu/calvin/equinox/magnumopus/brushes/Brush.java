@@ -1,6 +1,6 @@
 package edu.calvin.equinox.magnumopus.brushes;
 
-import android.graphics.Bitmap;
+import android.graphics.Canvas;
 
 /**
  * Basic brush interface.
@@ -24,14 +24,10 @@ public abstract class Brush
     public abstract boolean onTouchRelease();
 
     /**
-     * Get a preview of what this brush is drawing, but has not committed yet.
-     *
-     * @return
-     *  The preview, or null if not available.
+     * Render a preview of what this brush is drawing, but has not committed yet.
      */
-    public Bitmap getPreview()
+    public void drawPreview(Canvas previewCanvas)
     {
-        return null;
     }
 
     public abstract void setColor(int color);
