@@ -50,6 +50,10 @@ public class MainActivity extends AppCompatActivity
                 startActivity(new Intent(this, AboutActivity.class));
                 return true;
 
+            case R.id.menu_help:
+                startActivity(new Intent(this, HelpActivity.class));
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }

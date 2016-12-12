@@ -20,6 +20,8 @@
         </activity>
         <activity android:name=".AboutActivity">
         </activity>
+        <activity android:name=".HelpActivity">
+        </activity>
         <activity android:name=".CanvasActivity"
                   android:theme="@style/FullScreenTheme">
         </activity>
