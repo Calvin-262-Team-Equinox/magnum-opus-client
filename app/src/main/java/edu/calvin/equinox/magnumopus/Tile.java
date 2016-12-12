@@ -173,11 +173,7 @@ public class Tile
         m_compositeCanvas.drawBitmap(m_syncedLayer, 0, 0, null);
         m_compositeCanvas.drawBitmap(m_drawLayer, 0, 0, null);
 
-        Bitmap preview = m_brush.getPreview();
-        if (preview != null)
-        {
-            m_compositeCanvas.drawBitmap(preview, 0, 0, null);
-        }
+        m_brush.drawPreview(m_compositeCanvas);
 
         return m_composite;
     }
