@@ -9,4 +9,8 @@
         <item>Pen Brush</item>
         <item>Pencil Brush</item>
     </string-array>
+    <string name="dialog_text">Enter a canvas name...</string>
+    <string name="ok">OK</string>
+    <string name="cancel">CANCEL</string>
+
 </resources>

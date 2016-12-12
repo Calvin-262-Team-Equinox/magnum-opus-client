@@ -3,6 +3,7 @@ package edu.calvin.equinox.magnumopus;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -59,6 +60,8 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+
+
     /**
      * Open the canvas.
      *
@@ -67,6 +70,10 @@ public class MainActivity extends AppCompatActivity
      */
     public void openCanvas(View view)
     {
+        FragmentManager fm = getSupportFragmentManager();
+        SelectCanvasName dialog = new SelectCanvasName();
+        dialog.show(fm, "fragment_name");
+
         startActivity(new Intent(this, CanvasActivity.class));
     }
 
