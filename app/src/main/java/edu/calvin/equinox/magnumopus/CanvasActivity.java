@@ -25,6 +25,7 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
     private Spinner m_brushSpinner;
     private String m_brushType;
     private int m_canvasID;
+    private int m_selectedColor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -42,6 +43,8 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
 
         TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
         theCanvas.setCanvasId(m_canvasID);
+        m_selectedColor = Color.BLUE;
+        
     }
 
     /**
@@ -58,6 +61,7 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         m_brushType = (String) m_brushSpinner.getSelectedItem();
         TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
         theCanvas.setBrush(m_brushType);
+        theCanvas.setColor(m_selectedColor);
 
         if (theCanvas.isErasing())
         {
@@ -106,6 +110,7 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         else
         {
             btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
+            theCanvas.setColor(m_selectedColor);
         }
     }
 
@@ -138,7 +143,8 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         {
             theCanvas.setBrush( m_brushType );
             btn.setColorFilter(getResources().getColor(R.color.dim_foreground_disabled_material_dark));
-        }
+            theCanvas.setColor(m_selectedColor);
+            }
     }
 
     /**
@@ -159,6 +165,7 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
                     @Override
                     public void onColorSelected(int selectedColor) {
                         Log.d("ColorText", "onColorSelected: 0x" + Integer.toHexString(selectedColor));
+                        m_selectedColor = selectedColor;
                     }
                 })
                 .setPositiveButton("ok", new ColorPickerClickListener() {
