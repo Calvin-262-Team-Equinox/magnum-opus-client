@@ -455,7 +455,7 @@ public class Tile
                         e.printStackTrace();
                     }
                 }
-                else
+                else if ( conn.getResponseCode() != 204)
                 {
                     Log.e("GetTileSyncTask", "HTTP error " + conn.getResponseCode());
                 }
