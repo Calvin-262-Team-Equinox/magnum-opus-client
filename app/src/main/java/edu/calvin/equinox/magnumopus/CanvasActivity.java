@@ -24,6 +24,7 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
 {
     private Spinner m_brushSpinner;
     private String m_brushType;
+    private int m_canvasID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -31,11 +32,16 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_canvas);
 
+        m_canvasID = getIntent().getIntExtra("EXTRA_CANVAS_ID", 1);
+
         getWindow().getDecorView().setBackgroundColor(Color.WHITE);
 
         m_brushSpinner = (Spinner) findViewById(R.id.brush_spinner);
         m_brushType = (String) m_brushSpinner.getSelectedItem();
         m_brushSpinner.setOnItemSelectedListener(this);
+
+        TilingCanvasView theCanvas = (TilingCanvasView)findViewById(R.id.canvas_view);
+        theCanvas.setCanvasId(m_canvasID);
     }
 
     /**

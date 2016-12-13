@@ -60,8 +60,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
-
     /**
      * Open the canvas.
      *
@@ -71,10 +69,8 @@ public class MainActivity extends AppCompatActivity
     public void openCanvas(View view)
     {
         FragmentManager fm = getSupportFragmentManager();
-        SelectCanvasName dialog = new SelectCanvasName();
+        SelectCanvasName dialog = new SelectCanvasName(this);
         dialog.show(fm, "fragment_name");
-
-        startActivity(new Intent(this, CanvasActivity.class));
     }
 
     /**

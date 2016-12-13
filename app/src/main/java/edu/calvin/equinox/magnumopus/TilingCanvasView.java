@@ -57,6 +57,8 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
 
     private Random m_rand;
 
+    private int m_canvasID;
+
     public TilingCanvasView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
@@ -84,6 +86,11 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         m_rand = new Random(System.nanoTime());
 
         postDelayed(new TimedUpdater(this), 1000);
+    }
+
+    public void setCanvasId( int canvasID)
+    {
+        m_canvasID = canvasID;
     }
 
     static final class TimedUpdater implements Runnable
@@ -272,7 +279,6 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         int xMax = getWidth() + curX + 2 * Tile.TILE_SIZE;
         int yMax = getHeight() + curY + 2 * Tile.TILE_SIZE;
 
-        int canvasID = 1;
 
         // Remove unneeded tiles.
         Iterator<TreeMap.Entry<Coordinate<Integer>, Tile>> it = m_tiles.entrySet().iterator();
@@ -294,7 +300,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                             5,
                             data
                     );
-                    Cache.INSTANCE.put(canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
+                    Cache.INSTANCE.put(m_canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
                 }
 
                 it.remove();
@@ -315,7 +321,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                     {
                         tile = new Tile(
                                 m_brushType,
-                                Cache.INSTANCE.get(canvasID + "-" + coord.x + "-" + coord.y)
+                                Cache.INSTANCE.get(m_canvasID + "-" + coord.x + "-" + coord.y)
                         );
                         m_tiles.put(coord, tile);
                     }
@@ -331,15 +337,14 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
 
     private void syncTiles()
     {
-        int canvasID = 1;
 
         for (TreeMap.Entry<Coordinate<Integer>, Tile> entry : m_tiles.entrySet())
         {
             Tile tile = entry.getValue();
             Coordinate<Integer> coord = entry.getKey();
             tile.beginSyncEdits(
-                    "http://153.106.116.72:8085/equinox/tile/" + canvasID + "/" + coord.x + "/" + coord.y,
-                    "http://153.106.116.72:8085/equinox/update/tile/" + canvasID + "/" + coord.x + "/" + coord.y,
+                    "http://153.106.116.82:8085/equinox/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
+                    "http://153.106.116.82:8085/equinox/update/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
                     this
             );
             if (tile.getVersion() > 0 && m_rand.nextDouble() < 0.1)
@@ -351,7 +356,7 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
                         5,
                         data
                 );
-                Cache.INSTANCE.put(canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
+                Cache.INSTANCE.put(m_canvasID + "-" + coord.x + "-" + coord.y, data.toByteArray());
             }
         }
     }
