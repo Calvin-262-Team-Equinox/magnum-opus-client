@@ -59,7 +59,7 @@ public class SelectCanvasName extends DialogFragment
                 .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         name = input.getText().toString();
-                        new PostCreateCanvas(m_main).execute( "http://153.106.116.82:8085/equinox/create/canvas/" + name );
+                        new PostCreateCanvas(m_main).execute( "http://cs262.cs.calvin.edu:8085/equinox/create/canvas/" + name );
                     }
                 })
                 //When cancel is pressed, cancel the dialog box

@@ -343,8 +343,8 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             Tile tile = entry.getValue();
             Coordinate<Integer> coord = entry.getKey();
             tile.beginSyncEdits(
-                    "http://153.106.116.82:8085/equinox/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
-                    "http://153.106.116.82:8085/equinox/update/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
+                    "http://cs262.cs.calvin.edu:8085/equinox/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
+                    "http://cs262.cs.calvin.edu:8085/equinox/update/tile/" + m_canvasID + "/" + coord.x + "/" + coord.y,
                     this
             );
             if (tile.getVersion() > 0 && m_rand.nextDouble() < 0.1)
