@@ -88,6 +88,11 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
         postDelayed(new TimedUpdater(this), 1000);
     }
 
+    /**
+     *Initiates a canvas ID so the canvas is unique and can be accessed later
+     * @param canvasID
+     */
+
     public void setCanvasId( int canvasID)
     {
         m_canvasID = canvasID;
@@ -182,6 +187,11 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             );
         }
     }
+
+    /**
+     * If the screen is pressed then do this
+     * @param event
+     */
 
     @Override
     public boolean onTouchEvent(MotionEvent event)
@@ -334,6 +344,12 @@ public class TilingCanvasView extends View implements GestureDetector.OnGestureL
             }
         }
     }
+
+
+    /**
+     *Syncs the tiles with the server so that you can draw on the canvas and
+     * have it show up on a collaborator's phone.
+     */
 
     private void syncTiles()
     {

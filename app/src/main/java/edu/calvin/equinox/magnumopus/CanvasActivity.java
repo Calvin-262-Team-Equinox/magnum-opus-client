@@ -27,6 +27,11 @@ public class CanvasActivity extends AppCompatActivity implements AdapterView.OnI
     private int m_canvasID;
     private int m_selectedColor;
 
+    /**
+     *Initiates variables and creates a canvas with certain default values
+     * @param savedInstanceState
+     */
+
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
