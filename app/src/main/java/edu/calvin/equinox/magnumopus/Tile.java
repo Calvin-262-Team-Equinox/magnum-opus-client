@@ -96,6 +96,11 @@ public class Tile
     private Brush m_brush;
     private Color m_color;
 
+    /**
+     *Creates a Tile
+     * @param brushType
+     */
+
     public Tile(String brushType, byte[] cacheImg)
     {
         m_drawLayer = Bitmap.createBitmap(TILE_SIZE, TILE_SIZE, Bitmap.Config.ARGB_8888);

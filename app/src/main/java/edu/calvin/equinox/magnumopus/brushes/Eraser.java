@@ -62,6 +62,9 @@ public class Eraser extends Brush
 
     }
 
+    /**
+     *Makes the eraser move when the screen is pressed
+     */
     @Override
     public boolean onTouchMove(float x, float y)
     {
@@ -78,6 +81,9 @@ public class Eraser extends Brush
         return m_drawTrack.size() > 1 && doDraw(m_canvas, true);
     }
 
+    /**
+     *Stops erasing on release of touching screen
+     */
     @Override
     public boolean onTouchRelease()
     {

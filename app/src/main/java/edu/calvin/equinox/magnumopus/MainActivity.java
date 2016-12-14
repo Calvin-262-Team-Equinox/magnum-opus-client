@@ -47,6 +47,9 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    /**
+     *Retrieves a canvas from the server that has been searched for
+     */
     private class GetSearchCanvas extends AsyncTask<String, Void, JSONObject>
     {
         String theUrl ="";
@@ -115,6 +118,10 @@ public class MainActivity extends AppCompatActivity
             return output;
         }
 
+        /**
+         *After the search has been executed then try to find the canvas
+         * @param canvasData
+         */
         @Override
         protected void onPostExecute(JSONObject canvasData)
         {
@@ -139,6 +146,11 @@ public class MainActivity extends AppCompatActivity
         getMenuInflater().inflate(R.menu.activity_main_menu, menu);
         return true;
     }
+
+    /**
+     * This shows the menu items, about and help
+     * @param item
+     */
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
